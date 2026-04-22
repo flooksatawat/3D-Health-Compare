@@ -18,6 +18,15 @@
                         brand: '#0369a1',
                         accent: '#0ea5e9',
                         bglight: '#f8fafc'
+                    },
+                    animation: {
+                        'fade-in': 'fadeIn 0.4s ease-out forwards',
+                    },
+                    keyframes: {
+                        fadeIn: {
+                            '0%': { opacity: '0', transform: 'translateY(10px)' },
+                            '100%': { opacity: '1', transform: 'translateY(0)' },
+                        }
                     }
                 }
             }
@@ -25,13 +34,19 @@
     </script>
     <style>
         .row-hover:hover { background-color: #f8fafc; transition: background 0.2s; }
-        .sticky-header { position: sticky; top: 0; z-index: 20; background: white; }
         @media print {
-            .no-print { display: none; }
+            .no-print { display: none !important; }
             body { background: white; padding: 0; }
+            .col-15k, .col-6k { display: table-cell !important; }
+            #cards-15k, #cards-6k { display: grid !important; margin-bottom: 20px; }
+            .row-extra { display: table-row !important; }
         }
-        .overflow-x-auto::-webkit-scrollbar { height: 6px; }
+        .overflow-x-auto::-webkit-scrollbar { height: 8px; }
         .overflow-x-auto::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+        .overflow-x-auto::-webkit-scrollbar-track { background: #f1f5f9; }
+        
+        /* Smooth transition for toggle */
+        #toggle-bg { transition: transform 0.3s cubic-bezier(0.4, 0.0, 0.2, 1); }
     </style>
 </head>
 <body class="bg-slate-50 font-sans text-slate-700">
@@ -40,190 +55,418 @@
     <header class="bg-white border-b border-slate-200 py-8 no-print">
         <div class="max-w-6xl mx-auto px-6 flex flex-col md:flex-row justify-between items-center gap-4">
             <div>
-                <h1 class="text-3xl font-bold text-slate-900 leading-tight tracking-tight">รายงานวิเคราะห์เปรียบเทียบผลประโยชน์</h1>
+                <h1 class="text-3xl font-bold text-slate-900 leading-tight tracking-tight">รายงานวิเคราะห์เปรียบเทียบ 6 แผนประกัน</h1>
                 <p class="text-slate-500 mt-1 italic text-sm">Chubb Life: 3 ดี เฮลท์ เอ็กซ์เซลเลนซ์ (อายุ 30 ปี เพศชาย)</p>
             </div>
-            <button onclick="window.print()" class="px-6 py-2 bg-brand text-white rounded-full hover:bg-slate-800 transition flex items-center gap-2 shadow-lg">
-                <i class="fa-solid fa-print"></i> พิมพ์ / บันทึก PDF
-            </button>
         </div>
     </header>
 
-    <!-- Summary Cards -->
     <section class="max-w-6xl mx-auto px-6 py-10">
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <!-- Plan 1 -->
-            <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
-                <span class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Plan 1: Economy</span>
-                <h3 class="text-xl font-bold text-slate-800 mt-1 italic">เน้นความคุ้มครอง IPD</h3>
-                <div class="my-4 pt-4 border-t border-slate-100">
-                    <div class="text-[10px] text-slate-400 uppercase">เบี้ยประกันภัยรายปี</div>
-                    <div class="text-3xl font-bold text-brand">25,220 <small class="text-sm font-normal text-slate-400">บาท</small></div>
+        
+        <!-- Toggle Switch (3 Options) -->
+        <div class="flex flex-col items-center mb-10 no-print">
+            <p class="text-sm text-slate-500 font-medium mb-3">กดเลือกหมวดค่าห้อง หรือดูเปรียบเทียบทั้งหมด</p>
+            <div class="bg-slate-200 p-1.5 rounded-full flex relative shadow-inner w-full max-w-3xl mx-auto overflow-hidden">
+                <div id="toggle-bg" class="absolute w-[calc(33.333%-4px)] h-[calc(100%-12px)] bg-white rounded-full shadow transition-transform duration-300 left-1.5 top-1.5 z-0"></div>
+                
+                <button onclick="switchTab('6k')" id="btn-6k" class="flex-1 relative z-10 py-3 text-[13px] md:text-sm font-bold text-brand rounded-full transition-colors duration-300 flex items-center justify-center gap-1 md:gap-2">
+                    <i class="fa-solid fa-bed"></i> แผน <span class="hidden md:inline">6,000</span><span class="md:hidden">6K</span>
+                </button>
+                
+                <button onclick="switchTab('15k')" id="btn-15k" class="flex-1 relative z-10 py-3 text-[13px] md:text-sm font-bold text-slate-500 rounded-full transition-colors duration-300 flex items-center justify-center gap-1 md:gap-2">
+                    <i class="fa-solid fa-crown"></i> แผน <span class="hidden md:inline">15,000</span><span class="md:hidden">15K</span>
+                </button>
+
+                <button onclick="switchTab('all')" id="btn-all" class="flex-1 relative z-10 py-3 text-[13px] md:text-sm font-bold text-slate-500 rounded-full transition-colors duration-300 flex items-center justify-center gap-1 md:gap-2">
+                    <i class="fa-solid fa-table-columns"></i> <span class="hidden md:inline">เปรียบเทียบ</span> 6 แผน
+                </button>
+            </div>
+        </div>
+
+        <!-- ================= CARDS SECTION ================= -->
+        <div id="all-cards-container" class="flex flex-col gap-6">
+            
+            <!-- Cards 6K -->
+            <div id="cards-6k" class="grid grid-cols-1 md:grid-cols-3 gap-6 animate-fade-in">
+                <!-- Plan 1 -->
+                <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 flex flex-col">
+                    <span class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Plan 1</span>
+                    <h3 class="text-xl font-bold text-slate-800 mt-1">Economy 6K</h3>
+                    <div class="my-4 pt-4 border-t border-slate-100 flex-grow">
+                        <div class="text-[10px] text-slate-400 uppercase">เบี้ยประกันภัยรายปี</div>
+                        <div class="text-3xl font-bold text-brand">25,220 <small class="text-sm font-normal text-slate-400">บาท</small></div>
+                    </div>
+                    <ul class="space-y-2 text-sm text-slate-600 bg-slate-50 p-4 rounded-xl">
+                        <li class="flex items-center"><i class="fa-solid fa-check text-green-500 mr-2 w-4"></i> ค่าห้อง 6,000 บาท/วัน</li>
+                        <li class="flex items-center text-slate-400"><i class="fa-solid fa-xmark text-red-400 mr-2 w-4"></i> ไม่มีค่ารักษา OPD</li>
+                        <li class="flex items-center"><i class="fa-solid fa-shield text-accent mr-2 w-4"></i> วงเงิน 10 ล้านบาท</li>
+                    </ul>
                 </div>
-                <ul class="space-y-2 text-sm text-slate-600">
-                    <li class="flex items-center"><i class="fa-solid fa-check text-green-500 mr-2"></i> ค่าห้อง 6,000 บาท/วัน</li>
-                    <li class="flex items-center text-slate-400"><i class="fa-solid fa-xmark mr-2 text-red-400"></i> ไม่มีค่ารักษา OPD</li>
-                    <li class="flex items-center"><i class="fa-solid fa-shield text-accent mr-2"></i> วงเงิน 10 ล้านบาท</li>
-                </ul>
+
+                <!-- Plan 2 (Recommended 6K) -->
+                <div class="bg-white p-6 rounded-2xl shadow-xl border-2 border-accent relative transform md:-translate-y-2 z-10 flex flex-col">
+                    <div class="absolute -top-3 left-1/2 -translate-x-1/2 bg-accent text-white px-4 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider whitespace-nowrap shadow-md">แนะนำ คุ้มค่าที่สุด</div>
+                    <span class="text-[10px] font-bold text-accent uppercase tracking-widest">Plan 2</span>
+                    <h3 class="text-xl font-bold text-slate-800 mt-1">Balanced 6K</h3>
+                    <div class="my-4 pt-4 border-t border-slate-100 flex-grow">
+                        <div class="text-[10px] text-slate-400 uppercase">เบี้ยประกันภัยรายปี</div>
+                        <div class="text-3xl font-bold text-brand">35,708 <small class="text-sm font-normal text-slate-400">บาท</small></div>
+                    </div>
+                    <ul class="space-y-2 text-sm text-slate-600 bg-blue-50 p-4 rounded-xl border border-blue-100">
+                        <li class="flex items-center font-bold text-slate-800"><i class="fa-solid fa-check text-green-500 mr-2 w-4"></i> ค่าห้อง 6,000 บาท/วัน</li>
+                        <li class="flex items-center font-bold text-brand"><i class="fa-solid fa-notes-medical text-brand mr-2 w-4"></i> มี OPD 2,000 บ./ครั้ง</li>
+                        <li class="flex items-center"><i class="fa-solid fa-shield text-accent mr-2 w-4"></i> วงเงิน 10 ล้านบาท</li>
+                    </ul>
+                </div>
+
+                <!-- Plan 3 -->
+                <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 flex flex-col">
+                    <span class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Plan 3</span>
+                    <h3 class="text-xl font-bold text-slate-800 mt-1">Plus 6K</h3>
+                    <div class="my-4 pt-4 border-t border-slate-100 flex-grow">
+                        <div class="text-[10px] text-slate-400 uppercase">เบี้ยประกันภัยรายปี</div>
+                        <div class="text-3xl font-bold text-brand">42,500 <small class="text-sm font-normal text-slate-400">บาท</small></div>
+                    </div>
+                    <ul class="space-y-2 text-sm text-slate-600 bg-slate-50 p-4 rounded-xl">
+                        <li class="flex items-center"><i class="fa-solid fa-check text-green-500 mr-2 w-4"></i> ค่าห้อง 6,000 บาท/วัน</li>
+                        <li class="flex items-center font-medium text-brand"><i class="fa-solid fa-notes-medical text-brand mr-2 w-4"></i> มี OPD 3,000 บ./ครั้ง</li>
+                        <li class="flex items-center"><i class="fa-solid fa-shield text-accent mr-2 w-4"></i> วงเงิน 10 ล้านบาท</li>
+                    </ul>
+                </div>
             </div>
 
-            <!-- Plan 2 -->
-            <div class="bg-white p-6 rounded-2xl shadow-xl border-2 border-accent relative transform md:scale-105 z-10">
-                <div class="absolute -top-3 left-1/2 -translate-x-1/2 bg-accent text-white px-4 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider whitespace-nowrap">แนะนำสำหรับการใช้งานจริง</div>
-                <span class="text-[10px] font-bold text-accent uppercase tracking-widest">Plan 2: Balanced</span>
-                <h3 class="text-xl font-bold text-slate-800 mt-1 italic">IPD + OPD ครบวงจร</h3>
-                <div class="my-4 pt-4 border-t border-slate-100">
-                    <div class="text-[10px] text-slate-400 uppercase">เบี้ยประกันภัยรายปี</div>
-                    <div class="text-3xl font-bold text-brand">35,708 <small class="text-sm font-normal text-slate-400">บาท</small></div>
+            <!-- Cards 15K (Hidden by default) -->
+            <div id="cards-15k" class="grid grid-cols-1 md:grid-cols-3 gap-6 hidden animate-fade-in">
+                <!-- Plan 4 -->
+                <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 flex flex-col">
+                    <span class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Plan 4</span>
+                    <h3 class="text-xl font-bold text-slate-800 mt-1">Premium 15K</h3>
+                    <div class="my-4 pt-4 border-t border-slate-100 flex-grow">
+                        <div class="text-[10px] text-slate-400 uppercase">เบี้ยประกันภัยรายปี</div>
+                        <div class="text-3xl font-bold text-slate-700">38,100 <small class="text-sm font-normal text-slate-400">บาท</small></div>
+                    </div>
+                    <ul class="space-y-2 text-sm text-slate-600 bg-slate-50 p-4 rounded-xl">
+                        <li class="flex items-center"><i class="fa-solid fa-check text-green-500 mr-2 w-4"></i> ค่าห้อง 15,000 บาท/วัน</li>
+                        <li class="flex items-center text-slate-400"><i class="fa-solid fa-xmark text-red-400 mr-2 w-4"></i> ไม่มีค่ารักษา OPD</li>
+                        <li class="flex items-center"><i class="fa-solid fa-shield-heart text-yellow-500 mr-2 w-4"></i> วงเงิน 60 ล้านบาท</li>
+                    </ul>
                 </div>
-                <ul class="space-y-2 text-sm text-slate-600">
-                    <li class="flex items-center font-bold"><i class="fa-solid fa-check text-green-500 mr-2"></i> ค่าห้อง 6,000 บาท/วัน</li>
-                    <li class="flex items-center font-bold text-brand"><i class="fa-solid fa-check text-brand mr-2"></i> มี OPD 2,000 บาท/ครั้ง</li>
-                    <li class="flex items-center"><i class="fa-solid fa-shield text-accent mr-2"></i> วงเงิน 10 ล้านบาท</li>
-                </ul>
+
+                <!-- Plan 5 -->
+                <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 flex flex-col">
+                    <span class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Plan 5</span>
+                    <h3 class="text-xl font-bold text-slate-800 mt-1">Premium OPD 2K</h3>
+                    <div class="my-4 pt-4 border-t border-slate-100 flex-grow">
+                        <div class="text-[10px] text-slate-400 uppercase">เบี้ยประกันภัยรายปี</div>
+                        <div class="text-3xl font-bold text-slate-700">48,600 <small class="text-sm font-normal text-slate-400">บาท</small></div>
+                    </div>
+                    <ul class="space-y-2 text-sm text-slate-600 bg-slate-50 p-4 rounded-xl">
+                        <li class="flex items-center"><i class="fa-solid fa-check text-green-500 mr-2 w-4"></i> ค่าห้อง 15,000 บาท/วัน</li>
+                        <li class="flex items-center font-medium text-brand"><i class="fa-solid fa-notes-medical text-brand mr-2 w-4"></i> มี OPD 2,000 บ./ครั้ง</li>
+                        <li class="flex items-center"><i class="fa-solid fa-shield-heart text-yellow-500 mr-2 w-4"></i> วงเงิน 60 ล้านบาท</li>
+                    </ul>
+                </div>
+
+                <!-- Plan 6 (Recommended 15K) -->
+                <div class="bg-slate-900 p-6 rounded-2xl shadow-xl relative transform md:-translate-y-2 z-10 text-white flex flex-col ring-4 ring-slate-800">
+                    <div class="absolute -top-3 left-1/2 -translate-x-1/2 bg-yellow-500 text-slate-900 px-4 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider whitespace-nowrap shadow-md">ตัวท็อป พรีเมียมสูงสุด</div>
+                    <span class="text-[10px] font-bold text-sky-300 uppercase tracking-widest">Plan 6</span>
+                    <h3 class="text-xl font-bold mt-1 text-white">High-End 15K</h3>
+                    <div class="my-4 pt-4 border-t border-slate-700 flex-grow">
+                        <div class="text-[10px] text-sky-300 uppercase">เบี้ยประกันภัยรายปี</div>
+                        <div class="text-3xl font-bold">52,081 <small class="text-sm font-normal text-sky-400">บาท</small></div>
+                    </div>
+                    <ul class="space-y-2 text-sm text-sky-100 bg-slate-800 p-4 rounded-xl border border-slate-700">
+                        <li class="flex items-center font-bold"><i class="fa-solid fa-crown text-yellow-400 mr-2 w-4"></i> ค่าห้อง 15,000 บาท/วัน</li>
+                        <li class="flex items-center font-bold text-sky-300"><i class="fa-solid fa-notes-medical text-sky-300 mr-2 w-4"></i> มี OPD 3,000 บ./ครั้ง</li>
+                        <li class="flex items-center"><i class="fa-solid fa-shield-heart text-yellow-400 mr-2 w-4"></i> วงเงิน 60 ล้านบาท</li>
+                    </ul>
+                </div>
             </div>
 
-            <!-- Plan 3 -->
-            <div class="bg-slate-900 p-6 rounded-2xl shadow-xl text-white">
-                <span class="text-[10px] font-bold text-sky-300 uppercase tracking-widest">Plan 3: High-End</span>
-                <h3 class="text-xl font-bold mt-1 italic">พรีเมียม / วงเงินสูงสุด</h3>
-                <div class="my-4 pt-4 border-t border-white/10">
-                    <div class="text-[10px] text-sky-300 uppercase">เบี้ยประกันภัยรายปี</div>
-                    <div class="text-3xl font-bold">52,081 <small class="text-sm font-normal text-sky-400">บาท</small></div>
-                </div>
-                <ul class="space-y-2 text-sm text-sky-100">
-                    <li class="flex items-center font-bold"><i class="fa-solid fa-crown text-yellow-400 mr-2"></i> ค่าห้อง 15,000 บาท/วัน</li>
-                    <li class="flex items-center font-bold"><i class="fa-solid fa-check text-sky-400 mr-2"></i> มี OPD 3,000 บาท/ครั้ง</li>
-                    <li class="flex items-center"><i class="fa-solid fa-shield-heart text-yellow-400 mr-2"></i> วงเงิน 60 ล้านบาท</li>
-                </ul>
-            </div>
         </div>
     </section>
 
     <!-- Table Section -->
     <section class="max-w-6xl mx-auto px-6 pb-20">
         <div class="bg-white rounded-3xl shadow-sm border border-slate-200 overflow-hidden">
-            <div class="p-8 border-b border-slate-100">
+            <div class="p-8 border-b border-slate-100 bg-slate-50/50 flex justify-between items-center flex-wrap gap-4">
                 <h2 class="text-2xl font-bold text-slate-800 flex items-center gap-3">
-                    <span class="bg-brand text-white w-8 h-8 rounded-lg flex items-center justify-center text-sm">19</span>
-                    หมวดผลประโยชน์และเบี้ยประกัน
+                    <span class="bg-brand text-white w-8 h-8 rounded-lg flex items-center justify-center text-sm shadow">19</span>
+                    ตารางเปรียบเทียบเชิงลึก
                 </h2>
+                <div id="table-badge" class="px-4 py-1.5 bg-blue-100 text-brand rounded-full text-xs font-bold uppercase tracking-wider">
+                    กำลังแสดง: หมวดค่าห้อง 6,000
+                </div>
             </div>
             
-            <div class="overflow-x-auto">
-                <table class="w-full text-left border-collapse min-w-[800px]">
+            <div class="overflow-x-auto pb-4">
+                <!-- min-w-[1200px] ensures the table doesn't squish when showing all 6 plans -->
+                <table class="w-full text-left border-collapse min-w-[800px] md:min-w-[1100px]">
                     <thead>
-                        <tr class="bg-slate-50 text-slate-500 text-[10px] uppercase tracking-widest">
-                            <th class="p-6 border-b border-slate-100 min-w-[300px]">รายการความคุ้มครอง</th>
-                            <th class="p-6 border-b border-slate-100 text-center">แผน Economy</th>
-                            <th class="p-6 border-b border-slate-100 text-center bg-blue-50 text-brand font-bold">แผน Balanced</th>
-                            <th class="p-6 border-b border-slate-100 text-center">แผน High-End</th>
+                        <tr class="bg-white text-slate-500 text-[10px] uppercase tracking-widest border-b-2 border-slate-200">
+                            <th class="p-4 md:p-6 min-w-[250px] sticky left-0 bg-white z-20 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)]">รายการความคุ้มครอง</th>
+                            
+                            <!-- Headers 6K -->
+                            <th class="p-4 md:p-6 text-center col-6k border-l border-slate-100 w-[12%]">Plan 1 <br><span class="text-sm font-bold text-slate-800 whitespace-nowrap">ไม่มี OPD</span></th>
+                            <th class="p-4 md:p-6 text-center col-6k bg-blue-50/50 text-brand font-bold border-l border-brand/20 w-[12%] shadow-inner">Plan 2 <br><span class="text-sm whitespace-nowrap">+ OPD 2K</span></th>
+                            <th class="p-4 md:p-6 text-center col-6k border-l border-slate-100 w-[12%]">Plan 3 <br><span class="text-sm font-bold text-slate-800 whitespace-nowrap">+ OPD 3K</span></th>
+                            
+                            <!-- Headers 15K -->
+                            <th class="p-4 md:p-6 text-center col-15k hidden border-l border-slate-100 w-[12%]">Plan 4 <br><span class="text-sm font-bold text-slate-800 whitespace-nowrap">ไม่มี OPD</span></th>
+                            <th class="p-4 md:p-6 text-center col-15k hidden border-l border-slate-100 w-[12%]">Plan 5 <br><span class="text-sm font-bold text-slate-800 whitespace-nowrap">+ OPD 2K</span></th>
+                            <th class="p-4 md:p-6 text-center col-15k hidden bg-slate-900 text-yellow-400 font-bold border-l border-slate-700 w-[12%] shadow-inner">Plan 6 <br><span class="text-sm whitespace-nowrap">+ OPD 3K</span></th>
                         </tr>
                     </thead>
-                    <tbody class="text-sm divide-y divide-slate-100">
+                    <tbody class="text-sm divide-y divide-slate-100 relative z-10">
+                        
                         <!-- Group 1 -->
-                        <tr class="bg-slate-50/50"><td colspan="4" class="px-6 py-2 font-bold text-brand text-[10px] uppercase tracking-widest">ส่วนที่ 1: ผู้ป่วยใน (IPD)</td></tr>
+                        <tr class="bg-slate-50"><td colspan="7" class="px-6 py-3 font-bold text-brand text-[10px] uppercase tracking-widest sticky left-0 z-20 bg-slate-50 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)]">1. ผลประโยชน์กรณีผู้ป่วยใน (IPD)</td></tr>
+                        
                         <tr class="row-hover">
-                            <td class="p-6 font-medium text-slate-800">1. ค่าห้องพัก และค่าอาหาร (ต่อวัน)</td>
-                            <td class="p-6 text-center">6,000</td>
-                            <td class="p-6 text-center bg-blue-50/20 font-bold">6,000</td>
-                            <td class="p-6 text-center font-bold">15,000</td>
-                        </tr>
-                        <tr class="row-hover">
-                            <td class="p-6 font-medium text-slate-800">2. ค่าบริการทางการแพทย์ ตรวจวินิจฉัย บำบัดรักษา</td>
-                            <td class="p-6 text-center text-green-600 italic">จ่ายตามจริง</td>
-                            <td class="p-6 text-center bg-blue-50/20 text-green-600 italic">จ่ายตามจริง</td>
-                            <td class="p-6 text-center text-green-600 italic">จ่ายตามจริง</td>
-                        </tr>
-                        <tr class="row-hover">
-                            <td class="p-6 font-medium text-slate-800">3. ค่ายา สารอาหาร และเวชภัณฑ์</td>
-                            <td class="p-6 text-center text-green-600 italic">จ่ายตามจริง</td>
-                            <td class="p-6 text-center bg-blue-50/20 text-green-600 italic">จ่ายตามจริง</td>
-                            <td class="p-6 text-center text-green-600 italic">จ่ายตามจริง</td>
-                        </tr>
-                        <tr class="row-hover">
-                            <td class="p-6 font-medium text-slate-800">4. ค่ายาและเวชภัณฑ์กลับบ้าน (Take home)</td>
-                            <td class="p-6 text-center">20,000</td>
-                            <td class="p-6 text-center bg-blue-50/20 font-bold text-brand">20,000</td>
-                            <td class="p-6 text-center text-green-600 italic">จ่ายตามจริง</td>
-                        </tr>
-                        <tr class="row-hover">
-                            <td class="p-6 font-medium text-slate-800">5. ค่าหมอเยี่ยมไข้ (ต่อวัน)</td>
-                            <td class="p-6 text-center">6,000</td>
-                            <td class="p-6 text-center bg-blue-50/20 font-bold text-brand">6,000</td>
-                            <td class="p-6 text-center text-green-600 italic">จ่ายตามจริง</td>
+                            <td class="p-4 md:p-6 font-medium text-slate-800 sticky left-0 bg-white z-20 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)]">หมวดที่ 1 ค่าห้องพัก ค่าอาหาร และค่าบริการใน รพ.</td>
+                            <td class="p-4 md:p-6 text-center col-6k border-l border-slate-100">6,000</td>
+                            <td class="p-4 md:p-6 text-center col-6k bg-blue-50/30 font-bold text-brand border-l border-brand/20">6,000</td>
+                            <td class="p-4 md:p-6 text-center col-6k border-l border-slate-100">6,000</td>
+                            <td class="p-4 md:p-6 text-center col-15k hidden border-l border-slate-100 font-bold">15,000</td>
+                            <td class="p-4 md:p-6 text-center col-15k hidden border-l border-slate-100 font-bold">15,000</td>
+                            <td class="p-4 md:p-6 text-center col-15k hidden bg-slate-50 font-bold text-slate-900 border-l border-slate-200">15,000</td>
                         </tr>
                         
+                        <tr class="row-hover row-extra hidden">
+                            <td class="p-4 md:p-6 font-medium text-slate-600 md:pl-10 text-xs sticky left-0 bg-white z-20 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)]">หมวดที่ 2 ค่าบริการทางการแพทย์ ตรวจวินิจฉัย บำบัดรักษา</td>
+                            <td class="p-4 md:p-6 text-center col-6k text-green-600 italic border-l border-slate-100 whitespace-nowrap">จ่ายตามจริง</td>
+                            <td class="p-4 md:p-6 text-center col-6k bg-blue-50/30 text-green-600 italic border-l border-brand/20 whitespace-nowrap">จ่ายตามจริง</td>
+                            <td class="p-4 md:p-6 text-center col-6k text-green-600 italic border-l border-slate-100 whitespace-nowrap">จ่ายตามจริง</td>
+                            <td class="p-4 md:p-6 text-center col-15k hidden text-green-600 italic border-l border-slate-100 whitespace-nowrap">จ่ายตามจริง</td>
+                            <td class="p-4 md:p-6 text-center col-15k hidden text-green-600 italic border-l border-slate-100 whitespace-nowrap">จ่ายตามจริง</td>
+                            <td class="p-4 md:p-6 text-center col-15k hidden bg-slate-50 text-green-600 italic border-l border-slate-200 whitespace-nowrap">จ่ายตามจริง</td>
+                        </tr>
+
+                        <tr class="row-hover row-extra hidden">
+                            <td class="p-4 md:p-6 font-medium text-slate-600 md:pl-10 text-xs sticky left-0 bg-white z-20 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)]">หมวดที่ 3 ค่าผู้ประกอบวิชาชีพเวชกรรม (แพทย์) ตรวจรักษา</td>
+                            <td class="p-4 md:p-6 text-center col-6k text-green-600 italic border-l border-slate-100 whitespace-nowrap">จ่ายตามจริง</td>
+                            <td class="p-4 md:p-6 text-center col-6k bg-blue-50/30 text-green-600 italic border-l border-brand/20 whitespace-nowrap">จ่ายตามจริง</td>
+                            <td class="p-4 md:p-6 text-center col-6k text-green-600 italic border-l border-slate-100 whitespace-nowrap">จ่ายตามจริง</td>
+                            <td class="p-4 md:p-6 text-center col-15k hidden text-green-600 italic border-l border-slate-100 whitespace-nowrap">จ่ายตามจริง</td>
+                            <td class="p-4 md:p-6 text-center col-15k hidden text-green-600 italic border-l border-slate-100 whitespace-nowrap">จ่ายตามจริง</td>
+                            <td class="p-4 md:p-6 text-center col-15k hidden bg-slate-50 text-green-600 italic border-l border-slate-200 whitespace-nowrap">จ่ายตามจริง</td>
+                        </tr>
+
+                        <tr class="row-hover row-extra hidden">
+                            <td class="p-4 md:p-6 font-medium text-slate-600 md:pl-10 text-xs sticky left-0 bg-white z-20 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)]">หมวดที่ 4 ค่ารักษาพยาบาลโดยการผ่าตัด (ศัลยกรรม)</td>
+                            <td class="p-4 md:p-6 text-center col-6k text-green-600 italic border-l border-slate-100 whitespace-nowrap">จ่ายตามจริง</td>
+                            <td class="p-4 md:p-6 text-center col-6k bg-blue-50/30 text-green-600 italic border-l border-brand/20 whitespace-nowrap">จ่ายตามจริง</td>
+                            <td class="p-4 md:p-6 text-center col-6k text-green-600 italic border-l border-slate-100 whitespace-nowrap">จ่ายตามจริง</td>
+                            <td class="p-4 md:p-6 text-center col-15k hidden text-green-600 italic border-l border-slate-100 whitespace-nowrap">จ่ายตามจริง</td>
+                            <td class="p-4 md:p-6 text-center col-15k hidden text-green-600 italic border-l border-slate-100 whitespace-nowrap">จ่ายตามจริง</td>
+                            <td class="p-4 md:p-6 text-center col-15k hidden bg-slate-50 text-green-600 italic border-l border-slate-200 whitespace-nowrap">จ่ายตามจริง</td>
+                        </tr>
+
+                        <tr class="row-hover row-extra hidden">
+                            <td class="p-4 md:p-6 font-medium text-slate-600 md:pl-10 text-xs sticky left-0 bg-white z-20 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)]">หมวดที่ 5 การผ่าตัดใหญ่ที่ไม่ต้องเข้าพักรักษาตัว (Day Surgery)</td>
+                            <td class="p-4 md:p-6 text-center col-6k text-green-600 italic border-l border-slate-100 whitespace-nowrap">จ่ายตามจริง</td>
+                            <td class="p-4 md:p-6 text-center col-6k bg-blue-50/30 text-green-600 italic border-l border-brand/20 whitespace-nowrap">จ่ายตามจริง</td>
+                            <td class="p-4 md:p-6 text-center col-6k text-green-600 italic border-l border-slate-100 whitespace-nowrap">จ่ายตามจริง</td>
+                            <td class="p-4 md:p-6 text-center col-15k hidden text-green-600 italic border-l border-slate-100 whitespace-nowrap">จ่ายตามจริง</td>
+                            <td class="p-4 md:p-6 text-center col-15k hidden text-green-600 italic border-l border-slate-100 whitespace-nowrap">จ่ายตามจริง</td>
+                            <td class="p-4 md:p-6 text-center col-15k hidden bg-slate-50 text-green-600 italic border-l border-slate-200 whitespace-nowrap">จ่ายตามจริง</td>
+                        </tr>
+
                         <!-- Group 2 -->
-                        <tr class="bg-slate-50/50"><td colspan="4" class="px-6 py-2 font-bold text-brand text-[10px] uppercase tracking-widest">ส่วนที่ 2: กรณีไม่ต้องนอน รพ. (Non-IPD)</td></tr>
-                        <tr class="row-hover">
-                            <td class="p-6 font-medium text-slate-800">6. ตรวจวินิจฉัยก่อน/หลัง IPD</td>
-                            <td class="p-6 text-center text-green-600 italic">จ่ายตามจริง</td>
-                            <td class="p-6 text-center bg-blue-50/20 text-green-600 italic">จ่ายตามจริง</td>
-                            <td class="p-6 text-center text-green-600 italic">จ่ายตามจริง</td>
+                        <tr class="bg-slate-50"><td colspan="7" class="px-6 py-3 font-bold text-brand text-[10px] uppercase tracking-widest sticky left-0 z-20 bg-slate-50 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)]">2. ผลประโยชน์กรณีไม่ต้องเข้าพักรักษาตัวเป็นผู้ป่วยใน</td></tr>
+                        
+                        <tr class="row-hover row-extra hidden">
+                            <td class="p-4 md:p-6 font-medium text-slate-600 md:pl-10 text-xs sticky left-0 bg-white z-20 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)]">หมวดที่ 6 ค่าตรวจวินิจฉัยก่อน/หลัง การเข้าพักรักษาตัว</td>
+                            <td class="p-4 md:p-6 text-center col-6k text-green-600 italic border-l border-slate-100 whitespace-nowrap">จ่ายตามจริง</td>
+                            <td class="p-4 md:p-6 text-center col-6k bg-blue-50/30 text-green-600 italic border-l border-brand/20 whitespace-nowrap">จ่ายตามจริง</td>
+                            <td class="p-4 md:p-6 text-center col-6k text-green-600 italic border-l border-slate-100 whitespace-nowrap">จ่ายตามจริง</td>
+                            <td class="p-4 md:p-6 text-center col-15k hidden text-green-600 italic border-l border-slate-100 whitespace-nowrap">จ่ายตามจริง</td>
+                            <td class="p-4 md:p-6 text-center col-15k hidden text-green-600 italic border-l border-slate-100 whitespace-nowrap">จ่ายตามจริง</td>
+                            <td class="p-4 md:p-6 text-center col-15k hidden bg-slate-50 text-green-600 italic border-l border-slate-200 whitespace-nowrap">จ่ายตามจริง</td>
                         </tr>
-                        <tr class="row-hover">
-                            <td class="p-6 font-medium text-slate-800">7. อุบัติเหตุฉุกเฉิน (ภายใน 24 ชม.)</td>
-                            <td class="p-6 text-center text-green-600 italic">จ่ายตามจริง</td>
-                            <td class="p-6 text-center bg-blue-50/20 text-green-600 italic">จ่ายตามจริง</td>
-                            <td class="p-6 text-center text-green-600 italic">จ่ายตามจริง</td>
+
+                        <tr class="row-hover row-extra hidden">
+                            <td class="p-4 md:p-6 font-medium text-slate-600 md:pl-10 text-xs sticky left-0 bg-white z-20 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)]">หมวดที่ 7 อุบัติเหตุฉุกเฉิน (ผู้ป่วยนอก ภายใน 24 ชม.)</td>
+                            <td class="p-4 md:p-6 text-center col-6k text-green-600 italic border-l border-slate-100 whitespace-nowrap">จ่ายตามจริง</td>
+                            <td class="p-4 md:p-6 text-center col-6k bg-blue-50/30 text-green-600 italic border-l border-brand/20 whitespace-nowrap">จ่ายตามจริง</td>
+                            <td class="p-4 md:p-6 text-center col-6k text-green-600 italic border-l border-slate-100 whitespace-nowrap">จ่ายตามจริง</td>
+                            <td class="p-4 md:p-6 text-center col-15k hidden text-green-600 italic border-l border-slate-100 whitespace-nowrap">จ่ายตามจริง</td>
+                            <td class="p-4 md:p-6 text-center col-15k hidden text-green-600 italic border-l border-slate-100 whitespace-nowrap">จ่ายตามจริง</td>
+                            <td class="p-4 md:p-6 text-center col-15k hidden bg-slate-50 text-green-600 italic border-l border-slate-200 whitespace-nowrap">จ่ายตามจริง</td>
                         </tr>
-                        <tr class="row-hover">
-                            <td class="p-6 font-medium text-slate-800">8-13. เคมีบำบัด รังสีรักษา ล้างไต รถพยาบาล</td>
-                            <td class="p-6 text-center text-green-600 italic">จ่ายตามจริง</td>
-                            <td class="p-6 text-center bg-blue-50/20 text-green-600 italic">จ่ายตามจริง</td>
-                            <td class="p-6 text-center text-green-600 italic">จ่ายตามจริง</td>
+
+                        <tr class="row-hover row-extra hidden">
+                            <td class="p-4 md:p-6 font-medium text-slate-600 md:pl-10 text-xs sticky left-0 bg-white z-20 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)]">หมวดที่ 8 ค่าเวชศาสตร์ฟื้นฟู</td>
+                            <td class="p-4 md:p-6 text-center col-6k text-green-600 italic border-l border-slate-100 whitespace-nowrap">จ่ายตามจริง</td>
+                            <td class="p-4 md:p-6 text-center col-6k bg-blue-50/30 text-green-600 italic border-l border-brand/20 whitespace-nowrap">จ่ายตามจริง</td>
+                            <td class="p-4 md:p-6 text-center col-6k text-green-600 italic border-l border-slate-100 whitespace-nowrap">จ่ายตามจริง</td>
+                            <td class="p-4 md:p-6 text-center col-15k hidden text-green-600 italic border-l border-slate-100 whitespace-nowrap">จ่ายตามจริง</td>
+                            <td class="p-4 md:p-6 text-center col-15k hidden text-green-600 italic border-l border-slate-100 whitespace-nowrap">จ่ายตามจริง</td>
+                            <td class="p-4 md:p-6 text-center col-15k hidden bg-slate-50 text-green-600 italic border-l border-slate-200 whitespace-nowrap">จ่ายตามจริง</td>
+                        </tr>
+
+                        <tr class="row-hover row-extra hidden">
+                            <td class="p-4 md:p-6 font-medium text-slate-600 md:pl-10 text-xs sticky left-0 bg-white z-20 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)]">หมวดที่ 9 ค่าล้างไตผ่านทางเส้นเลือด</td>
+                            <td class="p-4 md:p-6 text-center col-6k text-green-600 italic border-l border-slate-100 whitespace-nowrap">จ่ายตามจริง</td>
+                            <td class="p-4 md:p-6 text-center col-6k bg-blue-50/30 text-green-600 italic border-l border-brand/20 whitespace-nowrap">จ่ายตามจริง</td>
+                            <td class="p-4 md:p-6 text-center col-6k text-green-600 italic border-l border-slate-100 whitespace-nowrap">จ่ายตามจริง</td>
+                            <td class="p-4 md:p-6 text-center col-15k hidden text-green-600 italic border-l border-slate-100 whitespace-nowrap">จ่ายตามจริง</td>
+                            <td class="p-4 md:p-6 text-center col-15k hidden text-green-600 italic border-l border-slate-100 whitespace-nowrap">จ่ายตามจริง</td>
+                            <td class="p-4 md:p-6 text-center col-15k hidden bg-slate-50 text-green-600 italic border-l border-slate-200 whitespace-nowrap">จ่ายตามจริง</td>
+                        </tr>
+
+                        <tr class="row-hover row-extra hidden">
+                            <td class="p-4 md:p-6 font-medium text-slate-600 md:pl-10 text-xs sticky left-0 bg-white z-20 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)]">หมวดที่ 10 ค่ารักษาเนื้องอกหรือมะเร็ง (รังสีรักษา)</td>
+                            <td class="p-4 md:p-6 text-center col-6k text-green-600 italic border-l border-slate-100 whitespace-nowrap">จ่ายตามจริง</td>
+                            <td class="p-4 md:p-6 text-center col-6k bg-blue-50/30 text-green-600 italic border-l border-brand/20 whitespace-nowrap">จ่ายตามจริง</td>
+                            <td class="p-4 md:p-6 text-center col-6k text-green-600 italic border-l border-slate-100 whitespace-nowrap">จ่ายตามจริง</td>
+                            <td class="p-4 md:p-6 text-center col-15k hidden text-green-600 italic border-l border-slate-100 whitespace-nowrap">จ่ายตามจริง</td>
+                            <td class="p-4 md:p-6 text-center col-15k hidden text-green-600 italic border-l border-slate-100 whitespace-nowrap">จ่ายตามจริง</td>
+                            <td class="p-4 md:p-6 text-center col-15k hidden bg-slate-50 text-green-600 italic border-l border-slate-200 whitespace-nowrap">จ่ายตามจริง</td>
+                        </tr>
+
+                        <tr class="row-hover row-extra hidden">
+                            <td class="p-4 md:p-6 font-medium text-slate-600 md:pl-10 text-xs sticky left-0 bg-white z-20 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)]">หมวดที่ 11 ค่ารักษาโรคมะเร็ง (เคมีบำบัด)</td>
+                            <td class="p-4 md:p-6 text-center col-6k text-green-600 italic border-l border-slate-100 whitespace-nowrap">จ่ายตามจริง</td>
+                            <td class="p-4 md:p-6 text-center col-6k bg-blue-50/30 text-green-600 italic border-l border-brand/20 whitespace-nowrap">จ่ายตามจริง</td>
+                            <td class="p-4 md:p-6 text-center col-6k text-green-600 italic border-l border-slate-100 whitespace-nowrap">จ่ายตามจริง</td>
+                            <td class="p-4 md:p-6 text-center col-15k hidden text-green-600 italic border-l border-slate-100 whitespace-nowrap">จ่ายตามจริง</td>
+                            <td class="p-4 md:p-6 text-center col-15k hidden text-green-600 italic border-l border-slate-100 whitespace-nowrap">จ่ายตามจริง</td>
+                            <td class="p-4 md:p-6 text-center col-15k hidden bg-slate-50 text-green-600 italic border-l border-slate-200 whitespace-nowrap">จ่ายตามจริง</td>
+                        </tr>
+
+                        <tr class="row-hover row-extra hidden">
+                            <td class="p-4 md:p-6 font-medium text-slate-600 md:pl-10 text-xs sticky left-0 bg-white z-20 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)]">หมวดที่ 12 ค่าบริการรถพยาบาลฉุกเฉิน</td>
+                            <td class="p-4 md:p-6 text-center col-6k text-green-600 italic border-l border-slate-100 whitespace-nowrap">จ่ายตามจริง</td>
+                            <td class="p-4 md:p-6 text-center col-6k bg-blue-50/30 text-green-600 italic border-l border-brand/20 whitespace-nowrap">จ่ายตามจริง</td>
+                            <td class="p-4 md:p-6 text-center col-6k text-green-600 italic border-l border-slate-100 whitespace-nowrap">จ่ายตามจริง</td>
+                            <td class="p-4 md:p-6 text-center col-15k hidden text-green-600 italic border-l border-slate-100 whitespace-nowrap">จ่ายตามจริง</td>
+                            <td class="p-4 md:p-6 text-center col-15k hidden text-green-600 italic border-l border-slate-100 whitespace-nowrap">จ่ายตามจริง</td>
+                            <td class="p-4 md:p-6 text-center col-15k hidden bg-slate-50 text-green-600 italic border-l border-slate-200 whitespace-nowrap">จ่ายตามจริง</td>
+                        </tr>
+
+                        <tr class="row-hover row-extra hidden">
+                            <td class="p-4 md:p-6 font-medium text-slate-600 md:pl-10 text-xs sticky left-0 bg-white z-20 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)]">หมวดที่ 13 ค่ารักษาพยาบาล โดยการผ่าตัดเล็ก</td>
+                            <td class="p-4 md:p-6 text-center col-6k text-green-600 italic border-l border-slate-100 whitespace-nowrap">จ่ายตามจริง</td>
+                            <td class="p-4 md:p-6 text-center col-6k bg-blue-50/30 text-green-600 italic border-l border-brand/20 whitespace-nowrap">จ่ายตามจริง</td>
+                            <td class="p-4 md:p-6 text-center col-6k text-green-600 italic border-l border-slate-100 whitespace-nowrap">จ่ายตามจริง</td>
+                            <td class="p-4 md:p-6 text-center col-15k hidden text-green-600 italic border-l border-slate-100 whitespace-nowrap">จ่ายตามจริง</td>
+                            <td class="p-4 md:p-6 text-center col-15k hidden text-green-600 italic border-l border-slate-100 whitespace-nowrap">จ่ายตามจริง</td>
+                            <td class="p-4 md:p-6 text-center col-15k hidden bg-slate-50 text-green-600 italic border-l border-slate-200 whitespace-nowrap">จ่ายตามจริง</td>
                         </tr>
 
                         <!-- Group 3 -->
-                        <tr class="bg-slate-50/50"><td colspan="4" class="px-6 py-2 font-bold text-brand text-[10px] uppercase tracking-widest">ส่วนที่ 3: ผลประโยชน์เพิ่มเติม</td></tr>
-                        <tr class="row-hover bg-brand/5 font-bold">
-                            <td class="p-6 text-brand">14. ค่ารักษาผู้ป่วยนอก (OPD) ต่อครั้ง</td>
-                            <td class="p-6 text-center text-red-400 italic">ไม่มี</td>
-                            <td class="p-6 text-center bg-blue-100 text-brand text-xl">2,000</td>
-                            <td class="p-6 text-center text-brand text-xl">3,000</td>
+                        <tr class="bg-slate-50"><td colspan="7" class="px-6 py-3 font-bold text-brand text-[10px] uppercase tracking-widest sticky left-0 z-20 bg-slate-50 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)]">3. ผลประโยชน์ขยายความคุ้มครอง</td></tr>
+                        
+                        <tr class="row-hover row-extra hidden">
+                            <td class="p-4 md:p-6 font-medium text-slate-600 md:pl-10 text-xs sticky left-0 bg-white z-20 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)]">หมวดที่ 14 อวัยวะเทียมและการศัลยกรรมตกแต่งเสริมสร้าง</td>
+                            <td class="p-4 md:p-6 text-center col-6k border-l border-slate-100 whitespace-nowrap">คุ้มครองตามเงื่อนไข</td>
+                            <td class="p-4 md:p-6 text-center col-6k bg-blue-50/30 border-l border-brand/20 whitespace-nowrap">คุ้มครองตามเงื่อนไข</td>
+                            <td class="p-4 md:p-6 text-center col-6k border-l border-slate-100 whitespace-nowrap">คุ้มครองตามเงื่อนไข</td>
+                            <td class="p-4 md:p-6 text-center col-15k hidden border-l border-slate-100 whitespace-nowrap">คุ้มครองตามเงื่อนไข</td>
+                            <td class="p-4 md:p-6 text-center col-15k hidden border-l border-slate-100 whitespace-nowrap">คุ้มครองตามเงื่อนไข</td>
+                            <td class="p-4 md:p-6 text-center col-15k hidden bg-slate-50 border-l border-slate-200 whitespace-nowrap">คุ้มครองตามเงื่อนไข</td>
                         </tr>
-                        <tr class="row-hover">
-                            <td class="p-6 font-medium text-slate-800">15-16. อวัยวะเทียม / สุขภาพจิต (IPD)</td>
-                            <td class="p-6 text-center">มีคุ้มครอง</td>
-                            <td class="p-6 text-center bg-blue-50/20">มีคุ้มครอง</td>
-                            <td class="p-6 text-center">มีคุ้มครองสูงสุด</td>
+
+                        <tr class="row-hover row-extra hidden">
+                            <td class="p-4 md:p-6 font-medium text-slate-600 md:pl-10 text-xs sticky left-0 bg-white z-20 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)]">หมวดที่ 15 การรักษาด้านสุขภาพจิตจากโรคร้าย/อุบัติเหตุ</td>
+                            <td class="p-4 md:p-6 text-center col-6k border-l border-slate-100 whitespace-nowrap">คุ้มครองตามเงื่อนไข</td>
+                            <td class="p-4 md:p-6 text-center col-6k bg-blue-50/30 border-l border-brand/20 whitespace-nowrap">คุ้มครองตามเงื่อนไข</td>
+                            <td class="p-4 md:p-6 text-center col-6k border-l border-slate-100 whitespace-nowrap">คุ้มครองตามเงื่อนไข</td>
+                            <td class="p-4 md:p-6 text-center col-15k hidden border-l border-slate-100 whitespace-nowrap">คุ้มครองตามเงื่อนไข</td>
+                            <td class="p-4 md:p-6 text-center col-15k hidden border-l border-slate-100 whitespace-nowrap">คุ้มครองตามเงื่อนไข</td>
+                            <td class="p-4 md:p-6 text-center col-15k hidden bg-slate-50 border-l border-slate-200 whitespace-nowrap">คุ้มครองตามเงื่อนไข</td>
                         </tr>
-                        <tr class="row-hover font-bold bg-slate-100">
-                            <td class="p-6">17. วงเงินคุ้มครองสูงสุดต่อรอบปี</td>
-                            <td class="p-6 text-center">10,000,000</td>
-                            <td class="p-6 text-center bg-blue-100 text-brand font-black">10,000,000</td>
-                            <td class="p-6 text-center font-black">60,000,000</td>
+
+                        <tr class="row-hover row-extra hidden">
+                            <td class="p-4 md:p-6 font-medium text-slate-600 md:pl-10 text-xs sticky left-0 bg-white z-20 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)]">หมวดที่ 16 ค่าบริการพยาบาลเฝ้าไข้พิเศษ</td>
+                            <td class="p-4 md:p-6 text-center col-6k border-l border-slate-100 whitespace-nowrap">คุ้มครองตามเงื่อนไข</td>
+                            <td class="p-4 md:p-6 text-center col-6k bg-blue-50/30 border-l border-brand/20 whitespace-nowrap">คุ้มครองตามเงื่อนไข</td>
+                            <td class="p-4 md:p-6 text-center col-6k border-l border-slate-100 whitespace-nowrap">คุ้มครองตามเงื่อนไข</td>
+                            <td class="p-4 md:p-6 text-center col-15k hidden border-l border-slate-100 whitespace-nowrap">คุ้มครองตามเงื่อนไข</td>
+                            <td class="p-4 md:p-6 text-center col-15k hidden border-l border-slate-100 whitespace-nowrap">คุ้มครองตามเงื่อนไข</td>
+                            <td class="p-4 md:p-6 text-center col-15k hidden bg-slate-50 border-l border-slate-200 whitespace-nowrap">คุ้มครองตามเงื่อนไข</td>
                         </tr>
-                        <tr class="row-hover">
-                            <td class="p-6 font-medium text-slate-800">18. การฝากครรภ์ และคลอดบุตร</td>
-                            <td class="p-6 text-center text-slate-300 italic">ไม่คุ้มครอง</td>
-                            <td class="p-6 text-center bg-blue-50/20 text-slate-300 italic">ไม่คุ้มครอง</td>
-                            <td class="p-6 text-center text-green-600">คุ้มครองตามกลุ่ม</td>
+
+                        <tr class="row-hover row-extra hidden">
+                            <td class="p-4 md:p-6 font-medium text-slate-600 md:pl-10 text-xs sticky left-0 bg-white z-20 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)]">หมวดที่ 17 การเก็บรักษาเซลล์ไข่หรืออสุจิ (ผู้ป่วยมะเร็ง)</td>
+                            <td class="p-4 md:p-6 text-center col-6k border-l border-slate-100 whitespace-nowrap">คุ้มครองตามเงื่อนไข</td>
+                            <td class="p-4 md:p-6 text-center col-6k bg-blue-50/30 border-l border-brand/20 whitespace-nowrap">คุ้มครองตามเงื่อนไข</td>
+                            <td class="p-4 md:p-6 text-center col-6k border-l border-slate-100 whitespace-nowrap">คุ้มครองตามเงื่อนไข</td>
+                            <td class="p-4 md:p-6 text-center col-15k hidden border-l border-slate-100 whitespace-nowrap">คุ้มครองตามเงื่อนไข</td>
+                            <td class="p-4 md:p-6 text-center col-15k hidden border-l border-slate-100 whitespace-nowrap">คุ้มครองตามเงื่อนไข</td>
+                            <td class="p-4 md:p-6 text-center col-15k hidden bg-slate-50 border-l border-slate-200 whitespace-nowrap">คุ้มครองตามเงื่อนไข</td>
                         </tr>
-                        <tr class="row-hover bg-slate-900 text-white shadow-xl">
-                            <td class="p-6 font-bold text-lg border-r border-white/10">19. เบี้ยประกันภัยรวม (รายปี)</td>
-                            <td class="p-6 text-center font-bold text-lg">25,220</td>
-                            <td class="p-6 text-center bg-brand font-bold text-2xl ring-2 ring-accent">35,708</td>
-                            <td class="p-6 text-center font-bold text-lg text-sky-400">52,081</td>
+
+                        <tr class="row-hover row-extra hidden">
+                            <td class="p-4 md:p-6 font-medium text-slate-600 md:pl-10 text-xs sticky left-0 bg-white z-20 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)]">หมวดที่ 18 การผ่าตัดช่องปากและใบหน้าขากรรไกร</td>
+                            <td class="p-4 md:p-6 text-center col-6k border-l border-slate-100 whitespace-nowrap">คุ้มครองตามเงื่อนไข</td>
+                            <td class="p-4 md:p-6 text-center col-6k bg-blue-50/30 border-l border-brand/20 whitespace-nowrap">คุ้มครองตามเงื่อนไข</td>
+                            <td class="p-4 md:p-6 text-center col-6k border-l border-slate-100 whitespace-nowrap">คุ้มครองตามเงื่อนไข</td>
+                            <td class="p-4 md:p-6 text-center col-15k hidden border-l border-slate-100 whitespace-nowrap">คุ้มครองตามเงื่อนไข</td>
+                            <td class="p-4 md:p-6 text-center col-15k hidden border-l border-slate-100 whitespace-nowrap">คุ้มครองตามเงื่อนไข</td>
+                            <td class="p-4 md:p-6 text-center col-15k hidden bg-slate-50 border-l border-slate-200 whitespace-nowrap">คุ้มครองตามเงื่อนไข</td>
+                        </tr>
+
+                        <tr class="row-hover row-extra hidden">
+                            <td class="p-4 md:p-6 font-medium text-slate-600 md:pl-10 text-xs sticky left-0 bg-white z-20 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)]">หมวดที่ 19 การตั้งครรภ์ คลอดบุตร เทคโนโลยีเจริญพันธุ์</td>
+                            <td class="p-4 md:p-6 text-center col-6k border-l border-slate-100 whitespace-nowrap">คุ้มครองตามเงื่อนไข</td>
+                            <td class="p-4 md:p-6 text-center col-6k bg-blue-50/30 border-l border-brand/20 whitespace-nowrap">คุ้มครองตามเงื่อนไข</td>
+                            <td class="p-4 md:p-6 text-center col-6k border-l border-slate-100 whitespace-nowrap">คุ้มครองตามเงื่อนไข</td>
+                            <td class="p-4 md:p-6 text-center col-15k hidden border-l border-slate-100 whitespace-nowrap">คุ้มครองตามเงื่อนไข</td>
+                            <td class="p-4 md:p-6 text-center col-15k hidden border-l border-slate-100 whitespace-nowrap">คุ้มครองตามเงื่อนไข</td>
+                            <td class="p-4 md:p-6 text-center col-15k hidden bg-slate-50 border-l border-slate-200 whitespace-nowrap">คุ้มครองตามเงื่อนไข</td>
+                        </tr>
+
+                        <!-- Summary / Special Rows (No Number) -->
+                        <tr class="bg-slate-50"><td colspan="7" class="px-6 py-3 font-bold text-brand text-[10px] uppercase tracking-widest sticky left-0 z-20 bg-slate-50 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)]">ผลประโยชน์เพิ่มเติม และเบี้ยประกันภัย</td></tr>
+
+                        <tr class="row-hover font-bold text-base">
+                            <td class="p-4 md:p-6 text-brand flex items-center gap-2 sticky left-0 bg-white z-20 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)]">
+                                <i class="fa-solid fa-notes-medical w-4"></i> ค่ารักษาผู้ป่วยนอก (OPD) ต่อครั้ง
+                            </td>
+                            
+                            <td class="p-4 md:p-6 text-center col-6k text-slate-400 font-normal italic border-l border-slate-100">ไม่มี</td>
+                            <td class="p-4 md:p-6 text-center col-6k bg-blue-100/50 text-brand text-xl border-l border-brand/20">2,000</td>
+                            <td class="p-4 md:p-6 text-center col-6k text-brand text-xl border-l border-slate-100">3,000</td>
+                            
+                            <td class="p-4 md:p-6 text-center col-15k hidden text-slate-400 font-normal italic border-l border-slate-100">ไม่มี</td>
+                            <td class="p-4 md:p-6 text-center col-15k hidden text-slate-800 text-xl border-l border-slate-100">2,000</td>
+                            <td class="p-4 md:p-6 text-center col-15k hidden bg-yellow-50 text-yellow-600 text-xl border-l border-yellow-200/50">3,000</td>
+                        </tr>
+
+                        <tr class="row-hover bg-slate-50/50">
+                            <td class="p-4 md:p-6 font-medium text-slate-800 sticky left-0 bg-slate-50 z-20 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)]">วงเงินคุ้มครองสูงสุดต่อรอบปี</td>
+                            <td class="p-4 md:p-6 text-center col-6k font-bold border-l border-slate-100 whitespace-nowrap">10 ล้าน</td>
+                            <td class="p-4 md:p-6 text-center col-6k bg-blue-50/30 font-bold text-brand border-l border-brand/20 whitespace-nowrap">10 ล้าน</td>
+                            <td class="p-4 md:p-6 text-center col-6k font-bold border-l border-slate-100 whitespace-nowrap">10 ล้าน</td>
+                            <td class="p-4 md:p-6 text-center col-15k hidden font-bold text-lg border-l border-slate-100 whitespace-nowrap">60 ล้าน</td>
+                            <td class="p-4 md:p-6 text-center col-15k hidden font-bold text-lg border-l border-slate-100 whitespace-nowrap">60 ล้าน</td>
+                            <td class="p-4 md:p-6 text-center col-15k hidden bg-slate-50 font-bold text-lg text-slate-900 border-l border-slate-200 whitespace-nowrap">60 ล้าน</td>
+                        </tr>
+
+                        <!-- Summary Row -->
+                        <tr class="bg-slate-800 text-white shadow-xl">
+                            <td class="p-4 md:p-6 font-bold text-lg sticky left-0 bg-slate-800 z-30 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.3)]">เบี้ยประกันภัยรวม (รายปี)</td>
+                            
+                            <td class="p-4 md:p-6 text-center col-6k font-bold md:text-lg border-l border-white/10">25,220</td>
+                            <td class="p-4 md:p-6 text-center col-6k bg-brand font-bold text-xl md:text-2xl ring-2 ring-accent border-l border-brand z-10 relative">35,708</td>
+                            <td class="p-4 md:p-6 text-center col-6k font-bold md:text-lg border-l border-white/10 text-sky-200">42,500</td>
+                            
+                            <td class="p-4 md:p-6 text-center col-15k hidden font-bold md:text-lg border-l border-white/10">38,100</td>
+                            <td class="p-4 md:p-6 text-center col-15k hidden font-bold md:text-lg border-l border-white/10">48,600</td>
+                            <td class="p-4 md:p-6 text-center col-15k hidden bg-slate-900 font-bold text-xl md:text-2xl text-yellow-400 ring-2 ring-yellow-500 border-l border-slate-900 z-10 relative">52,081</td>
                         </tr>
                     </tbody>
                 </table>
             </div>
-        </div>
-
-        <!-- Analysis Text -->
-        <div class="mt-12 bg-white p-8 rounded-3xl border border-slate-200">
-            <h4 class="font-bold text-slate-800 mb-4 flex items-center gap-2 italic">
-                <i class="fa-solid fa-lightbulb text-yellow-500"></i> สรุปผลวิเคราะห์เชิงเปรียบเทียบ
-            </h4>
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-8 text-sm text-slate-600 leading-relaxed">
-                <p>
-                    <strong>ความคุ้มค่า (Value):</strong> แผน Balanced (เบี้ย 35,708 บาท) ให้ผลประโยชน์ส่วนเพิ่มที่ชัดเจนที่สุดด้วยค่ารักษาผู้ป่วยนอก (OPD) 2,000 บาทต่อครั้ง ซึ่งครอบคลุมค่าใช้จ่ายพื้นฐานในรพ.เอกชนได้เกือบทั้งหมด เหมาะสำหรับผู้ที่ต้องการใช้งานประกันอย่างสม่ำเสมอโดยไม่ต้องรอเจ็บหนัก
-                </p>
-                <p>
-                    <strong>ความพรีเมียม (Premium):</strong> แผน High-End (เบี้ย 52,081 บาท) โดดเด่นด้วยค่าห้องที่สูงถึง 15,000 บาท ซึ่งรองรับห้องพักระดับสูงสุด (Suite) ในเครือรพ.ชั้นนำ และมีวงเงินรวมมหาศาลถึง 60 ล้านบาท รองรับเทคโนโลยีการรักษาขั้นสูงอย่างเต็มรูปแบบ
-                </p>
+            
+            <!-- Show More Details Button -->
+            <div class="p-4 border-t border-slate-100 text-center bg-slate-50">
+                <button id="btn-more" onclick="toggleDetails()" class="text-sm font-bold text-brand hover:text-slate-800 transition-colors flex items-center justify-center w-full gap-2 py-2">
+                    <i class="fa-solid fa-chevron-down"></i> กดดูรายละเอียดความคุ้มครองอื่นๆ เพิ่มเติม
+                </button>
             </div>
         </div>
     </section>
@@ -231,8 +474,101 @@
     <!-- Footer -->
     <footer class="bg-slate-900 py-16 text-center text-slate-500 no-print">
         <p class="text-xs uppercase tracking-widest font-bold text-white mb-2 italic">AI-Powered Health Analysis Report</p>
-        <p class="text-[10px] opacity-40">ข้อมูลนี้เพื่อการนำเสนอเท่านั้น โปรดศึกษาเงื่อนไขในกรมธรรม์ฉบับจริงอีกครั้ง</p>
+        <p class="text-[10px] opacity-40">ข้อมูลเบี้ยประกันเป็นการประมาณการเพื่อการนำเสนอ โปรดตรวจสอบกับตัวแทนอีกครั้ง</p>
     </footer>
 
+    <!-- Interactive Scripts -->
+    <script>
+        function switchTab(tab) {
+            const btn6k = document.getElementById('btn-6k');
+            const btn15k = document.getElementById('btn-15k');
+            const btnAll = document.getElementById('btn-all');
+            const toggleBg = document.getElementById('toggle-bg');
+            const badge = document.getElementById('table-badge');
+
+            const cards6k = document.getElementById('cards-6k');
+            const cards15k = document.getElementById('cards-15k');
+
+            // 1. Reset all button text colors
+            [btn6k, btn15k, btnAll].forEach(btn => {
+                btn.className = 'flex-1 relative z-10 py-3 text-[13px] md:text-sm font-bold text-slate-500 rounded-full transition-colors duration-300 flex items-center justify-center gap-1 md:gap-2';
+            });
+
+            // 2. Apply specific logic based on selection
+            if (tab === '6k') {
+                toggleBg.style.transform = 'translateX(0)';
+                btn6k.classList.remove('text-slate-500');
+                btn6k.classList.add('text-brand');
+                
+                badge.innerText = 'กำลังแสดง: หมวดค่าห้อง 6,000';
+                badge.className = 'px-4 py-1.5 bg-blue-100 text-brand rounded-full text-xs font-bold uppercase tracking-wider transition-colors';
+
+                cards6k.classList.remove('hidden');
+                cards15k.classList.add('hidden');
+                
+                document.querySelectorAll('.col-6k').forEach(el => el.classList.remove('hidden'));
+                document.querySelectorAll('.col-15k').forEach(el => el.classList.add('hidden'));
+
+            } else if (tab === '15k') {
+                toggleBg.style.transform = 'translateX(100%)';
+                btn15k.classList.remove('text-slate-500');
+                btn15k.classList.add('text-slate-900');
+                
+                badge.innerText = 'กำลังแสดง: หมวดค่าห้อง 15,000';
+                badge.className = 'px-4 py-1.5 bg-slate-800 text-yellow-400 rounded-full text-xs font-bold uppercase tracking-wider transition-colors';
+
+                cards6k.classList.add('hidden');
+                cards15k.classList.remove('hidden');
+                
+                document.querySelectorAll('.col-6k').forEach(el => el.classList.add('hidden'));
+                document.querySelectorAll('.col-15k').forEach(el => el.classList.remove('hidden'));
+
+            } else if (tab === 'all') {
+                toggleBg.style.transform = 'translateX(200%)';
+                btnAll.classList.remove('text-slate-500');
+                btnAll.classList.add('text-indigo-600');
+                
+                badge.innerText = 'กำลังแสดง: เปรียบเทียบทั้ง 6 แผน';
+                badge.className = 'px-4 py-1.5 bg-indigo-100 text-indigo-700 rounded-full text-xs font-bold uppercase tracking-wider transition-colors';
+
+                cards6k.classList.remove('hidden');
+                cards15k.classList.remove('hidden');
+                
+                document.querySelectorAll('.col-6k').forEach(el => el.classList.remove('hidden'));
+                document.querySelectorAll('.col-15k').forEach(el => el.classList.remove('hidden'));
+            }
+
+            // 3. Re-trigger animations for cards
+            [cards6k, cards15k].forEach(c => {
+                if(!c.classList.contains('hidden')) {
+                    c.classList.remove('animate-fade-in');
+                    void c.offsetWidth; // trigger reflow
+                    c.classList.add('animate-fade-in');
+                }
+            });
+        }
+
+        function toggleDetails() {
+            const rows = document.querySelectorAll('.row-extra');
+            const btn = document.getElementById('btn-more');
+            
+            if (!rows.length) return;
+
+            let isHidden = rows[0].classList.contains('hidden');
+            
+            rows.forEach(r => {
+                if(isHidden) {
+                    r.classList.remove('hidden');
+                    r.style.animation = 'fadeIn 0.3s ease-out forwards';
+                } else {
+                    r.classList.add('hidden');
+                }
+            });
+            
+            btn.innerHTML = isHidden 
+                ? '<i class="fa-solid fa-chevron-up"></i> ย่อรายละเอียด' 
+                : '<i class="fa-solid fa-chevron-down"></i> กดดูรายละเอียดความคุ้มครองอื่นๆ เพิ่มเติม';
+        }
+    </script>
 </body>
 </html>
