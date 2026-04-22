@@ -20,11 +20,11 @@
                         bglight: '#f8fafc'
                     },
                     animation: {
-                        'fade-in': 'fadeIn 0.4s ease-out forwards',
+                        'fade-in': 'fadeIn 0.3s ease-out forwards',
                     },
                     keyframes: {
                         fadeIn: {
-                            '0%': { opacity: '0', transform: 'translateY(10px)' },
+                            '0%': { opacity: '0', transform: 'translateY(5px)' },
                             '100%': { opacity: '1', transform: 'translateY(0)' },
                         }
                     }
@@ -35,39 +35,43 @@
     <style>
         .row-hover:hover { background-color: #f8fafc; transition: background 0.2s; }
         
-        /* Table Layout Optimization */
-        .table-condensed th, .table-condensed td {
-            padding-left: 0.5rem !important;
-            padding-right: 0.5rem !important;
-            font-size: 0.75rem !important;
+        /* สไตล์พิเศษสำหรับโหมดเปรียบเทียบ 6 แผน */
+        .mode-all .container-box { max-width: 100% !important; padding-left: 1rem; padding-right: 1rem; }
+        .mode-all table { table-layout: fixed; min-width: 100% !important; }
+        .mode-all th, .mode-all td { 
+            padding-left: 0.25rem !important; 
+            padding-right: 0.25rem !important; 
+            font-size: 0.7rem !important; 
         }
-        .table-condensed .text-xl { font-size: 1rem !important; }
-        .table-condensed .text-2xl { font-size: 1.125rem !important; }
-        
+        .mode-all .plan-title { font-size: 0.75rem !important; }
+        .mode-all .price-text { font-size: 0.85rem !important; }
+
         @media print {
             .no-print { display: none !important; }
             body { background: white; padding: 0; }
             .col-15k, .col-6k { display: table-cell !important; }
             .row-extra { display: table-row !important; }
         }
-
+        
+        .overflow-x-auto::-webkit-scrollbar { height: 6px; }
+        .overflow-x-auto::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+        
         #toggle-bg { transition: transform 0.3s cubic-bezier(0.4, 0.0, 0.2, 1); }
         
-        /* Sticky Labels for All View */
         .sticky-col {
             position: sticky;
             left: 0;
             background: white;
             z-index: 20;
-            box-shadow: 2px 0 5px -2px rgba(0,0,0,0.1);
+            box-shadow: 2px 0 5px -2px rgba(0,0,0,0.05);
         }
     </style>
 </head>
-<body class="bg-slate-50 font-sans text-slate-700">
+<body id="main-body" class="bg-slate-50 font-sans text-slate-700">
 
     <!-- Header -->
     <header class="bg-white border-b border-slate-200 py-6 no-print">
-        <div class="max-w-[1400px] mx-auto px-6 flex flex-col md:flex-row justify-between items-center gap-4">
+        <div class="max-w-7xl mx-auto px-6 flex flex-col md:flex-row justify-between items-center gap-4">
             <div>
                 <h1 class="text-2xl font-bold text-slate-900 leading-tight tracking-tight">รายงานวิเคราะห์เปรียบเทียบ 6 แผนประกัน</h1>
                 <p class="text-slate-500 mt-1 italic text-xs">Chubb Life: 3 ดี เฮลท์ เอ็กซ์เซลเลนซ์ (อายุ 30 ปี เพศชาย)</p>
@@ -75,239 +79,229 @@
         </div>
     </header>
 
-    <section class="max-w-[1400px] mx-auto px-6 py-8">
+    <section class="container-box max-w-6xl mx-auto px-6 py-8 transition-all duration-500">
         
         <!-- Toggle Switch -->
         <div class="flex flex-col items-center mb-8 no-print">
-            <div class="bg-slate-200 p-1 rounded-full flex relative shadow-inner w-full max-w-2xl mx-auto overflow-hidden">
+            <div class="bg-slate-200 p-1 rounded-full flex relative shadow-inner w-full max-w-xl mx-auto overflow-hidden">
                 <div id="toggle-bg" class="absolute w-[calc(33.333%-4px)] h-[calc(100%-8px)] bg-white rounded-full shadow transition-transform duration-300 left-1 top-1 z-0"></div>
                 
-                <button onclick="switchTab('6k')" id="btn-6k" class="flex-1 relative z-10 py-2.5 text-xs font-bold text-brand rounded-full transition-colors duration-300 flex items-center justify-center gap-2">
-                    <i class="fa-solid fa-bed"></i> แผน 6,000
+                <button onclick="switchTab('6k')" id="btn-6k" class="flex-1 relative z-10 py-2 text-xs font-bold text-brand rounded-full transition-colors duration-300 flex items-center justify-center gap-2">
+                    <i class="fa-solid fa-bed text-[10px]"></i> 6,000
                 </button>
                 
-                <button onclick="switchTab('15k')" id="btn-15k" class="flex-1 relative z-10 py-2.5 text-xs font-bold text-slate-500 rounded-full transition-colors duration-300 flex items-center justify-center gap-2">
-                    <i class="fa-solid fa-crown"></i> แผน 15,000
+                <button onclick="switchTab('15k')" id="btn-15k" class="flex-1 relative z-10 py-2 text-xs font-bold text-slate-500 rounded-full transition-colors duration-300 flex items-center justify-center gap-2">
+                    <i class="fa-solid fa-crown text-[10px]"></i> 15,000
                 </button>
 
-                <button onclick="switchTab('all')" id="btn-all" class="flex-1 relative z-10 py-2.5 text-xs font-bold text-slate-500 rounded-full transition-colors duration-300 flex items-center justify-center gap-2">
-                    <i class="fa-solid fa-table-columns"></i> เปรียบเทียบ 6 แผน
+                <button onclick="switchTab('all')" id="btn-all" class="flex-1 relative z-10 py-2 text-xs font-bold text-slate-500 rounded-full transition-colors duration-300 flex items-center justify-center gap-2">
+                    <i class="fa-solid fa-layer-group text-[10px]"></i> ทั้ง 6 แผน
                 </button>
             </div>
         </div>
 
-        <!-- ================= CARDS SECTION ================= -->
-        <div id="cards-container" class="animate-fade-in">
-            <div id="cards-6k" class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div class="bg-white p-5 rounded-xl shadow-sm border border-slate-200">
-                    <span class="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Plan 1</span>
-                    <h3 class="font-bold text-slate-800">Economy 6K</h3>
-                    <div class="text-2xl font-bold text-brand mt-2 whitespace-nowrap">25,220 <small class="text-xs font-normal text-slate-400">บาท</small></div>
-                </div>
-                <div class="bg-white p-5 rounded-xl shadow-md border-2 border-accent relative ring-2 ring-accent/10">
-                    <div class="absolute -top-2.5 left-4 bg-accent text-white px-2 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider">แนะนำ คุ้มค่า</div>
-                    <span class="text-[9px] font-bold text-accent uppercase tracking-widest">Plan 2</span>
-                    <h3 class="font-bold text-slate-800">Balanced 6K</h3>
-                    <div class="text-2xl font-bold text-brand mt-2 whitespace-nowrap">35,708 <small class="text-xs font-normal text-slate-400">บาท</small></div>
-                </div>
-                <div class="bg-white p-5 rounded-xl shadow-sm border border-slate-200">
-                    <span class="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Plan 3</span>
-                    <h3 class="font-bold text-slate-800">Plus 6K</h3>
-                    <div class="text-2xl font-bold text-brand mt-2 whitespace-nowrap">40,963 <small class="text-xs font-normal text-slate-400">บาท</small></div>
-                </div>
+        <!-- ================= CARDS SUMMARY ================= -->
+        <div id="cards-6k" class="grid grid-cols-1 md:grid-cols-3 gap-4 animate-fade-in">
+            <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-200">
+                <span class="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Plan 1</span>
+                <h3 class="text-sm font-bold text-slate-800">Economy 6K</h3>
+                <div class="text-xl font-bold text-brand mt-1 whitespace-nowrap">25,220 <small class="text-[10px] font-normal text-slate-400">บาท</small></div>
             </div>
-
-            <div id="cards-15k" class="grid grid-cols-1 md:grid-cols-3 gap-4 hidden">
-                <div class="bg-white p-5 rounded-xl shadow-sm border border-slate-200">
-                    <span class="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Plan 4</span>
-                    <h3 class="font-bold text-slate-800">Premium 15K</h3>
-                    <div class="text-2xl font-bold text-slate-700 mt-2 whitespace-nowrap">36,338 <small class="text-xs font-normal text-slate-400">บาท</small></div>
-                </div>
-                <div class="bg-white p-5 rounded-xl shadow-sm border border-slate-200">
-                    <span class="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Plan 5</span>
-                    <h3 class="font-bold text-slate-800">Premium OPD 2K</h3>
-                    <div class="text-2xl font-bold text-slate-700 mt-2 whitespace-nowrap">46,826 <small class="text-xs font-normal text-slate-400">บาท</small></div>
-                </div>
-                <div class="bg-slate-900 p-5 rounded-xl shadow-xl border border-slate-800 text-white">
-                    <span class="text-[9px] font-bold text-sky-300 uppercase tracking-widest">Plan 6</span>
-                    <h3 class="font-bold">High-End 15K</h3>
-                    <div class="text-2xl font-bold text-yellow-400 mt-2 whitespace-nowrap">52,081 <small class="text-xs font-normal text-sky-400">บาท</small></div>
-                </div>
+            <div class="bg-white p-4 rounded-xl border-2 border-accent shadow-md relative">
+                <div class="absolute -top-2 left-3 bg-accent text-white px-2 py-0.5 rounded text-[8px] font-bold uppercase tracking-wider">แนะนำ คุ้มค่า</div>
+                <span class="text-[9px] font-bold text-accent uppercase tracking-widest">Plan 2</span>
+                <h3 class="text-sm font-bold text-slate-800">Balanced 6K</h3>
+                <div class="text-xl font-bold text-brand mt-1 whitespace-nowrap">35,708 <small class="text-[10px] font-normal text-slate-400">บาท</small></div>
+            </div>
+            <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-200">
+                <span class="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Plan 3</span>
+                <h3 class="text-sm font-bold text-slate-800">Plus 6K</h3>
+                <div class="text-xl font-bold text-brand mt-1 whitespace-nowrap">40,963 <small class="text-[10px] font-normal text-slate-400">บาท</small></div>
             </div>
         </div>
 
-        <!-- ================= TABLE SECTION ================= -->
-        <div class="mt-10 bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
-            <div class="p-5 border-b border-slate-100 bg-slate-50/50 flex justify-between items-center">
-                <h2 class="text-lg font-bold text-slate-800 flex items-center gap-2">
-                    <i class="fa-solid fa-list-check text-brand"></i> ตารางเปรียบเทียบเชิงลึก
+        <div id="cards-15k" class="grid grid-cols-1 md:grid-cols-3 gap-4 hidden animate-fade-in">
+            <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-200 text-slate-400">
+                <span class="text-[9px] font-bold uppercase tracking-widest">Plan 4</span>
+                <h3 class="text-sm font-bold text-slate-700">Premium 15K</h3>
+                <div class="text-xl font-bold text-slate-600 mt-1 whitespace-nowrap">36,338 <small class="text-[10px] font-normal">บาท</small></div>
+            </div>
+            <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-200">
+                <span class="text-[9px] font-bold uppercase tracking-widest text-slate-400">Plan 5</span>
+                <h3 class="text-sm font-bold text-slate-700">Premium OPD 2K</h3>
+                <div class="text-xl font-bold text-slate-600 mt-1 whitespace-nowrap">46,826 <small class="text-[10px] font-normal">บาท</small></div>
+            </div>
+            <div class="bg-slate-900 p-4 rounded-xl shadow-lg border border-slate-800 text-white">
+                <span class="text-[9px] font-bold text-sky-300 uppercase tracking-widest">Plan 6</span>
+                <h3 class="text-sm font-bold text-white">High-End 15K</h3>
+                <div class="text-xl font-bold text-yellow-400 mt-1 whitespace-nowrap">52,081 <small class="text-[10px] font-normal text-sky-400">บาท</small></div>
+            </div>
+        </div>
+
+        <!-- ================= MAIN TABLE ================= -->
+        <div class="mt-8 bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+            <div class="p-4 border-b border-slate-100 bg-slate-50/50 flex justify-between items-center">
+                <h2 class="text-md font-bold text-slate-800 flex items-center gap-2">
+                    <i class="fa-solid fa-table-list text-brand"></i> ตารางวิเคราะห์เชิงลึก
                 </h2>
-                <div id="table-badge" class="px-3 py-1 bg-blue-100 text-brand rounded-full text-[10px] font-bold uppercase tracking-wider">
-                    กำลังแสดง: แผนค่าห้อง 6,000
+                <div id="table-badge" class="px-3 py-1 bg-blue-100 text-brand rounded-full text-[9px] font-bold uppercase tracking-wider">
+                    แผนค่าห้อง 6,000
                 </div>
             </div>
             
             <div class="overflow-x-auto">
-                <table id="main-table" class="w-full text-left border-collapse table-fixed">
+                <table id="target-table" class="w-full text-left border-collapse">
                     <thead>
-                        <tr class="bg-white text-slate-500 text-[10px] uppercase tracking-widest border-b-2 border-slate-200">
-                            <th class="p-4 w-[240px] md:w-[22%] sticky-col">รายการความคุ้มครอง</th>
+                        <tr class="bg-white text-slate-400 text-[9px] uppercase tracking-widest border-b border-slate-200">
+                            <th class="p-3 w-[200px] md:w-[22%] sticky-col bg-white">ความคุ้มครอง</th>
                             
                             <!-- Headers 6K -->
-                            <th class="p-3 text-center col-6k border-l border-slate-100">Plan 1<br><span class="text-[10px] text-slate-800 whitespace-nowrap">ไม่มี OPD</span></th>
-                            <th class="p-3 text-center col-6k bg-blue-50/50 text-brand font-bold border-l border-brand/20">Plan 2<br><span class="text-[10px] whitespace-nowrap">+ OPD 2K</span></th>
-                            <th class="p-3 text-center col-6k border-l border-slate-100">Plan 3<br><span class="text-[10px] text-slate-800 whitespace-nowrap">+ OPD 3K</span></th>
+                            <th class="p-3 text-center col-6k border-l border-slate-100 plan-title">Plan 1<br><span class="text-slate-800 font-bold whitespace-nowrap">ไม่มี OPD</span></th>
+                            <th class="p-3 text-center col-6k bg-blue-50/50 text-brand font-bold border-l border-brand/20 plan-title shadow-inner">Plan 2<br><span class="whitespace-nowrap">+ 2,000</span></th>
+                            <th class="p-3 text-center col-6k border-l border-slate-100 plan-title">Plan 3<br><span class="text-slate-800 font-bold whitespace-nowrap">+ 3,000</span></th>
                             
                             <!-- Headers 15K -->
-                            <th class="p-3 text-center col-15k hidden border-l border-slate-100">Plan 4<br><span class="text-[10px] text-slate-800 whitespace-nowrap">ไม่มี OPD</span></th>
-                            <th class="p-3 text-center col-15k hidden border-l border-slate-100">Plan 5<br><span class="text-[10px] text-slate-800 whitespace-nowrap">+ OPD 2K</span></th>
-                            <th class="p-3 text-center col-15k hidden bg-slate-900 text-yellow-400 font-bold border-l border-slate-700">Plan 6<br><span class="text-[10px] whitespace-nowrap">+ OPD 3K</span></th>
+                            <th class="p-3 text-center col-15k hidden border-l border-slate-100 plan-title">Plan 4<br><span class="text-slate-800 font-bold whitespace-nowrap">ไม่มี OPD</span></th>
+                            <th class="p-3 text-center col-15k hidden border-l border-slate-100 plan-title">Plan 5<br><span class="text-slate-800 font-bold whitespace-nowrap">+ 2,000</span></th>
+                            <th class="p-3 text-center col-15k hidden bg-slate-900 text-yellow-400 font-bold border-l border-slate-700 plan-title">Plan 6<br><span class="whitespace-nowrap">+ 3,000</span></th>
                         </tr>
                     </thead>
-                    <tbody class="text-[13px] divide-y divide-slate-100">
+                    <tbody class="text-[12px] divide-y divide-slate-100">
                         
-                        <tr class="bg-slate-50">
-                            <td colspan="7" class="px-4 py-2 font-bold text-brand text-[10px] uppercase tracking-widest sticky left-0 z-20">1. ผลประโยชน์กรณีผู้ป่วยใน (IPD)</td>
-                        </tr>
+                        <tr class="bg-slate-50/80"><td colspan="7" class="px-3 py-1.5 font-bold text-brand text-[9px] uppercase tracking-widest sticky left-0">1. กรณีผู้ป่วยใน (IPD)</td></tr>
                         
                         <tr class="row-hover">
-                            <td class="p-4 font-medium text-slate-800 sticky-col">หมวดที่ 1 ค่าห้องพัก ค่าอาหาร ค่าบริการ รพ.</td>
-                            <td class="p-4 text-center col-6k border-l border-slate-100 whitespace-nowrap font-bold">6,000 บาท</td>
-                            <td class="p-4 text-center col-6k bg-blue-50/30 font-bold text-brand border-l border-brand/20 whitespace-nowrap">6,000 บาท</td>
-                            <td class="p-4 text-center col-6k border-l border-slate-100 whitespace-nowrap font-bold">6,000 บาท</td>
-                            <td class="p-4 text-center col-15k hidden border-l border-slate-100 whitespace-nowrap font-bold">15,000 บาท</td>
-                            <td class="p-4 text-center col-15k hidden border-l border-slate-100 whitespace-nowrap font-bold">15,000 บาท</td>
-                            <td class="p-4 text-center col-15k hidden bg-slate-50 font-bold text-slate-900 border-l border-slate-200 whitespace-nowrap">15,000 บาท</td>
+                            <td class="p-3 font-medium text-slate-800 sticky-col">หมวดที่ 1 ค่าห้องพัก และค่าอาหาร</td>
+                            <td class="p-3 text-center col-6k border-l border-slate-100 font-bold whitespace-nowrap">6,000 บาท</td>
+                            <td class="p-3 text-center col-6k bg-blue-50/30 font-bold text-brand border-l border-brand/20 whitespace-nowrap">6,000 บาท</td>
+                            <td class="p-3 text-center col-6k border-l border-slate-100 font-bold whitespace-nowrap">6,000 บาท</td>
+                            <td class="p-3 text-center col-15k hidden border-l border-slate-100 font-bold whitespace-nowrap">15,000 บาท</td>
+                            <td class="p-3 text-center col-15k hidden border-l border-slate-100 font-bold whitespace-nowrap">15,000 บาท</td>
+                            <td class="p-3 text-center col-15k hidden bg-slate-50 font-bold text-slate-900 border-l border-slate-200 whitespace-nowrap">15,000 บาท</td>
                         </tr>
-
+                        
                         <tr class="row-hover row-extra hidden">
-                            <td class="p-4 font-medium text-slate-800 sticky-col">2.4 ค่ายาและเวชภัณฑ์ สำหรับกลับบ้าน</td>
-                            <td class="p-4 text-center col-6k border-l border-slate-100 whitespace-nowrap">20,000 บาท</td>
-                            <td class="p-4 text-center col-6k bg-blue-50/30 font-bold text-brand border-l border-brand/20 whitespace-nowrap">20,000 บาท</td>
-                            <td class="p-4 text-center col-6k border-l border-slate-100 whitespace-nowrap">20,000 บาท</td>
-                            <td colspan="3" class="p-4 text-center col-15k hidden text-green-600 italic border-l border-slate-100 whitespace-nowrap font-bold">จ่ายตามจริง</td>
+                            <td class="p-3 font-medium text-slate-800 sticky-col">หมวดที่ 2-5 การรักษา และผ่าตัด</td>
+                            <td colspan="6" class="p-3 text-center text-green-600 italic whitespace-nowrap">จ่ายตามจริง (IPD ทั้งหมด)</td>
                         </tr>
 
-                        <tr class="bg-slate-50">
-                            <td colspan="7" class="px-4 py-2 font-bold text-brand text-[10px] uppercase tracking-widest sticky left-0 z-20">ผลประโยชน์เพิ่มเติม และเบี้ยประกันภัย</td>
-                        </tr>
+                        <tr class="bg-slate-50/80"><td colspan="7" class="px-3 py-1.5 font-bold text-brand text-[9px] uppercase tracking-widest sticky left-0">2. กรณีผู้ป่วยนอก และเพิ่มเติม</td></tr>
 
                         <!-- OPD ROW -->
                         <tr class="row-hover">
-                            <td class="p-4 text-brand sticky-col bg-white">
-                                <div class="flex items-center gap-2 font-bold">
-                                    <i class="fa-solid fa-notes-medical"></i> ค่ารักษาผู้ป่วยนอก (OPD)
+                            <td class="p-3 text-brand sticky-col bg-white">
+                                <div class="flex items-center gap-1 font-bold">
+                                    <i class="fa-solid fa-notes-medical text-[10px]"></i> 14. ค่ารักษาผู้ป่วยนอก (OPD)
                                 </div>
-                                <div class="text-[9px] text-slate-500 font-normal mt-1 whitespace-nowrap">สูงสุด 30 ครั้ง / รอบปี</div>
+                                <div class="text-[8px] text-slate-400 font-normal ml-4 whitespace-nowrap">สูงสุด 30 ครั้ง / รอบปี</div>
                             </td>
-                            <td class="p-4 text-center col-6k text-slate-400 italic border-l border-slate-100 whitespace-nowrap">ไม่มี</td>
-                            <td class="p-4 text-center col-6k bg-blue-100/50 text-brand font-bold border-l border-brand/20 whitespace-nowrap">2,000 บาท / ครั้ง</td>
-                            <td class="p-4 text-center col-6k text-brand font-bold border-l border-slate-100 whitespace-nowrap">3,000 บาท / ครั้ง</td>
-                            <td class="p-4 text-center col-15k hidden text-slate-400 italic border-l border-slate-100 whitespace-nowrap">ไม่มี</td>
-                            <td class="p-4 text-center col-15k hidden text-slate-800 font-bold border-l border-slate-100 whitespace-nowrap">2,000 บาท / ครั้ง</td>
-                            <td class="p-4 text-center col-15k hidden bg-yellow-50 text-yellow-600 font-bold border-l border-yellow-200/50 whitespace-nowrap">3,000 บาท / ครั้ง</td>
+                            <td class="p-3 text-center col-6k text-slate-300 italic border-l border-slate-100">ไม่มี</td>
+                            <td class="p-3 text-center col-6k bg-blue-100/50 text-brand font-bold border-l border-brand/20 price-text whitespace-nowrap">2,000 บาท / ครั้ง</td>
+                            <td class="p-3 text-center col-6k text-brand font-bold border-l border-slate-100 price-text whitespace-nowrap">3,000 บาท / ครั้ง</td>
+                            <td class="p-3 text-center col-15k hidden text-slate-300 italic border-l border-slate-100">ไม่มี</td>
+                            <td class="p-3 text-center col-15k hidden text-slate-800 font-bold border-l border-slate-100 price-text whitespace-nowrap">2,000 บาท / ครั้ง</td>
+                            <td class="p-3 text-center col-15k hidden bg-yellow-50 text-yellow-600 font-bold border-l border-yellow-200/50 price-text whitespace-nowrap">3,000 บาท / ครั้ง</td>
                         </tr>
 
-                        <!-- Mental Health / Dental -->
-                        <tr class="row-hover">
-                            <td class="p-4 text-slate-600 sticky-col bg-white">
-                                <div class="flex items-center gap-2 font-bold">
+                        <!-- Special OPDs -->
+                        <tr class="row-hover row-extra hidden">
+                            <td class="p-3 text-slate-500 sticky-col bg-white">
+                                <div class="flex items-center gap-1 font-bold">
                                     <i class="fa-solid fa-brain text-[10px]"></i> สุขภาพจิต / ทันตกรรม (OPD)
                                 </div>
-                                <div class="text-[9px] text-slate-400 font-normal mt-1 whitespace-nowrap">จ่ายร่วม 20% (ตามเงื่อนไข)</div>
+                                <div class="text-[8px] text-slate-400 font-normal ml-4 whitespace-nowrap">จ่ายร่วม 20% (ตามแผน)</div>
                             </td>
-                            <td class="p-4 text-center col-6k text-slate-400 italic border-l border-slate-100 whitespace-nowrap">ไม่มี</td>
-                            <td class="p-4 text-center col-6k bg-blue-50/30 text-slate-700 border-l border-brand/20 whitespace-nowrap font-medium">2,000 บาท / ครั้ง</td>
-                            <td class="p-4 text-center col-6k text-slate-700 border-l border-slate-100 whitespace-nowrap font-medium">3,000 บาท / ครั้ง</td>
-                            <td class="p-4 text-center col-15k hidden text-slate-400 italic border-l border-slate-100 whitespace-nowrap">ไม่มี</td>
-                            <td class="p-4 text-center col-15k hidden text-slate-700 border-l border-slate-100 whitespace-nowrap font-medium">2,000 บาท / ครั้ง</td>
-                            <td class="p-4 text-center col-15k hidden bg-slate-50 text-slate-700 border-l border-slate-200 whitespace-nowrap font-medium">3,000 บาท / ครั้ง</td>
+                            <td class="p-3 text-center col-6k text-slate-300 italic border-l border-slate-100">ไม่มี</td>
+                            <td class="p-3 text-center col-6k bg-blue-50/30 text-slate-700 border-l border-brand/20 whitespace-nowrap">2,000 บาท / ครั้ง</td>
+                            <td class="p-3 text-center col-6k text-slate-700 border-l border-slate-100 whitespace-nowrap">3,000 บาท / ครั้ง</td>
+                            <td class="p-3 text-center col-15k hidden text-slate-300 italic border-l border-slate-100">ไม่มี</td>
+                            <td class="p-3 text-center col-15k hidden text-slate-700 border-l border-slate-100 whitespace-nowrap">2,000 บาท / ครั้ง</td>
+                            <td class="p-3 text-center col-15k hidden bg-slate-50 text-slate-700 border-l border-slate-200 whitespace-nowrap">3,000 บาท / ครั้ง</td>
                         </tr>
 
-                        <!-- Total Limit -->
+                        <!-- 60M CI Boost -->
+                        <tr class="row-hover row-extra hidden bg-red-50/20">
+                            <td class="p-3 font-bold text-red-600 sticky-col bg-red-50/50">วงเงินเพิ่มกรณีโรคร้ายแรง</td>
+                            <td colspan="6" class="p-3 text-center text-red-600 font-bold whitespace-nowrap italic tracking-tight">+ เพิ่มอีก 60,000,000 บาท ทุกแผน</td>
+                        </tr>
+
                         <tr class="row-hover bg-slate-50/50">
-                            <td class="p-4 font-bold text-slate-800 sticky-col bg-slate-50">วงเงินคุ้มครองสูงสุดต่อรอบปี</td>
-                            <td class="p-4 text-center col-6k font-bold border-l border-slate-100 whitespace-nowrap">10,000,000 บาท</td>
-                            <td class="p-4 text-center col-6k bg-blue-50/30 font-black text-brand border-l border-brand/20 whitespace-nowrap">10,000,000 บาท</td>
-                            <td class="p-4 text-center col-6k font-bold border-l border-slate-100 whitespace-nowrap">10,000,000 บาท</td>
-                            <td class="p-4 text-center col-15k hidden font-bold border-l border-slate-100 whitespace-nowrap">60,000,000 บาท</td>
-                            <td class="p-4 text-center col-15k hidden font-bold border-l border-slate-100 whitespace-nowrap">60,000,000 บาท</td>
-                            <td class="p-4 text-center col-15k hidden bg-slate-900 font-bold text-yellow-400 border-l border-slate-800 whitespace-nowrap">60,000,000 บาท</td>
+                            <td class="p-3 font-bold text-slate-800 sticky-col bg-slate-50">วงเงินคุ้มครองสูงสุดต่อปี</td>
+                            <td class="p-3 text-center col-6k border-l border-slate-100 whitespace-nowrap font-bold">10,000,000 บาท</td>
+                            <td class="p-3 text-center col-6k bg-blue-50/30 font-black text-brand border-l border-brand/20 whitespace-nowrap">10,000,000 บาท</td>
+                            <td class="p-3 text-center col-6k border-l border-slate-100 whitespace-nowrap font-bold">10,000,000 บาท</td>
+                            <td class="p-3 text-center col-15k hidden font-bold border-l border-slate-100 whitespace-nowrap text-slate-700">60,000,000 บาท</td>
+                            <td class="p-3 text-center col-15k hidden font-bold border-l border-slate-100 whitespace-nowrap text-slate-700">60,000,000 บาท</td>
+                            <td class="p-3 text-center col-15k hidden bg-slate-900 font-bold text-yellow-400 border-l border-slate-800 whitespace-nowrap">60,000,000 บาท</td>
                         </tr>
 
-                        <!-- Total Premium -->
                         <tr class="bg-slate-800 text-white shadow-xl">
-                            <td class="p-4 font-bold sticky left-0 bg-slate-800 z-30 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.3)]">เบี้ยประกันภัยรวม (รายปี)</td>
-                            <td class="p-4 text-center col-6k font-bold border-l border-white/10 whitespace-nowrap">25,220 บาท</td>
-                            <td class="p-4 text-center col-6k bg-brand font-black text-lg ring-2 ring-accent border-l border-brand z-10 relative whitespace-nowrap">35,708 บาท</td>
-                            <td class="p-4 text-center col-6k font-bold border-l border-white/10 text-sky-200 whitespace-nowrap">40,963 บาท</td>
-                            <td class="p-4 text-center col-15k hidden font-bold border-l border-white/10 whitespace-nowrap">36,338 บาท</td>
-                            <td class="p-4 text-center col-15k hidden font-bold border-l border-white/10 whitespace-nowrap">46,826 บาท</td>
-                            <td class="p-4 text-center col-15k hidden bg-slate-900 font-black text-lg text-yellow-400 ring-2 ring-yellow-500 border-l border-slate-900 z-10 relative whitespace-nowrap">52,081 บาท</td>
+                            <td class="p-3 font-bold sticky left-0 bg-slate-800 z-30 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.3)]">เบี้ยประกันภัยรายปี</td>
+                            <td class="p-3 text-center col-6k font-bold border-l border-white/10 whitespace-nowrap price-text">25,220 บาท</td>
+                            <td class="p-3 text-center col-6k bg-brand font-black ring-2 ring-accent border-l border-brand z-10 relative whitespace-nowrap price-text">35,708 บาท</td>
+                            <td class="p-3 text-center col-6k font-bold border-l border-white/10 text-sky-200 whitespace-nowrap price-text">40,963 บาท</td>
+                            <td class="p-3 text-center col-15k hidden font-bold border-l border-white/10 whitespace-nowrap price-text">36,338 บาท</td>
+                            <td class="p-3 text-center col-15k hidden font-bold border-l border-white/10 whitespace-nowrap price-text">46,826 บาท</td>
+                            <td class="p-3 text-center col-15k hidden bg-slate-900 font-black text-yellow-400 ring-2 ring-yellow-500 border-l border-slate-900 z-10 relative whitespace-nowrap price-text">52,081 บาท</td>
                         </tr>
                     </tbody>
                 </table>
             </div>
             
             <div class="p-3 border-t border-slate-100 text-center bg-slate-50 no-print">
-                <button id="btn-more" onclick="toggleDetails()" class="text-[10px] font-bold text-brand hover:text-slate-800 transition-colors flex items-center justify-center w-full gap-2 py-1">
-                    <i class="fa-solid fa-chevron-down"></i> ดูรายละเอียดความคุ้มครองเชิงลึกเพิ่มเติม (IPD หมวด 2-19)
+                <button id="btn-more" onclick="toggleDetails()" class="text-[9px] font-bold text-brand hover:text-slate-800 transition-colors flex items-center justify-center w-full gap-2 py-1 uppercase tracking-tighter">
+                    <i class="fa-solid fa-chevron-down"></i> แสดงรายละเอียดครบทั้ง 19 หมวดเพิ่มเติม
                 </button>
             </div>
         </div>
     </section>
 
-    <footer class="bg-slate-900 py-12 text-center text-slate-500 no-print">
-        <p class="text-[10px] uppercase tracking-widest font-bold text-white mb-1 italic">AI-Powered Health Analysis Report</p>
-        <p class="text-[9px] opacity-40 italic">ข้อมูลนี้ใช้เพื่อการเปรียบเทียบเบื้องต้นเท่านั้น โปรดศึกษาเงื่อนไขกรมธรรม์ฉบับจริงอีกครั้ง</p>
+    <footer class="bg-slate-900 py-10 text-center text-slate-500 no-print">
+        <p class="text-[9px] uppercase tracking-widest font-bold text-white mb-1 italic">Health Analysis Report</p>
+        <p class="text-[8px] opacity-40">ข้อมูลนี้เพื่อการนำเสนอเท่านั้น โปรดศึกษาเงื่อนไขในกรมธรรม์ฉบับจริงอีกครั้ง</p>
     </footer>
 
     <script>
         function switchTab(tab) {
+            const body = document.getElementById('main-body');
             const btn6k = document.getElementById('btn-6k');
             const btn15k = document.getElementById('btn-15k');
             const btnAll = document.getElementById('btn-all');
             const toggleBg = document.getElementById('toggle-bg');
             const badge = document.getElementById('table-badge');
-            const table = document.getElementById('main-table');
 
-            const cards6k = document.getElementById('cards-6k');
-            const cards15k = document.getElementById('cards-15k');
-
-            // Reset Styles
-            [btn6k, btn15k, btnAll].forEach(btn => {
-                btn.className = 'flex-1 relative z-10 py-2.5 text-xs font-bold text-slate-500 rounded-full transition-colors duration-300 flex items-center justify-center gap-2';
-            });
-            table.classList.remove('table-condensed');
+            // Reset Buttons & View Mode
+            [btn6k, btn15k, btnAll].forEach(btn => btn.className = 'flex-1 relative z-10 py-2 text-xs font-bold text-slate-500 rounded-full transition-colors duration-300 flex items-center justify-center gap-2');
+            body.classList.remove('mode-all');
 
             if (tab === '6k') {
                 toggleBg.style.transform = 'translateX(0)';
                 btn6k.classList.add('text-brand');
-                badge.innerText = 'กำลังแสดง: แผนค่าห้อง 6,000';
-                badge.className = 'px-3 py-1 bg-blue-100 text-brand rounded-full text-[10px] font-bold uppercase tracking-wider transition-colors';
-                cards6k.classList.remove('hidden');
-                cards15k.classList.add('hidden');
+                badge.innerText = 'แผนค่าห้อง 6,000';
+                badge.className = 'px-3 py-1 bg-blue-100 text-brand rounded-full text-[9px] font-bold uppercase tracking-wider';
+                document.getElementById('cards-6k').classList.remove('hidden');
+                document.getElementById('cards-15k').classList.add('hidden');
                 document.querySelectorAll('.col-6k').forEach(el => el.classList.remove('hidden'));
                 document.querySelectorAll('.col-15k').forEach(el => el.classList.add('hidden'));
             } else if (tab === '15k') {
                 toggleBg.style.transform = 'translateX(100%)';
                 btn15k.classList.add('text-slate-900');
-                badge.innerText = 'กำลังแสดง: แผนค่าห้อง 15,000';
-                badge.className = 'px-3 py-1 bg-slate-800 text-yellow-400 rounded-full text-[10px] font-bold uppercase tracking-wider transition-colors';
-                cards6k.classList.add('hidden');
-                cards15k.classList.remove('hidden');
+                badge.innerText = 'แผนค่าห้อง 15,000';
+                badge.className = 'px-3 py-1 bg-slate-800 text-yellow-400 rounded-full text-[9px] font-bold uppercase tracking-wider';
+                document.getElementById('cards-6k').classList.add('hidden');
+                document.getElementById('cards-15k').classList.remove('hidden');
                 document.querySelectorAll('.col-6k').forEach(el => el.classList.add('hidden'));
                 document.querySelectorAll('.col-15k').forEach(el => el.classList.remove('hidden'));
             } else if (tab === 'all') {
+                body.classList.add('mode-all');
                 toggleBg.style.transform = 'translateX(200%)';
                 btnAll.classList.add('text-indigo-600');
-                badge.innerText = 'กำลังแสดง: เปรียบเทียบทั้ง 6 แผน';
-                badge.className = 'px-3 py-1 bg-indigo-100 text-indigo-700 rounded-full text-[10px] font-bold uppercase tracking-wider transition-colors';
-                cards6k.classList.remove('hidden');
-                cards15k.classList.remove('hidden');
+                badge.innerText = 'เปรียบเทียบครบทั้ง 6 แผน';
+                badge.className = 'px-3 py-1 bg-indigo-100 text-indigo-700 rounded-full text-[9px] font-bold uppercase tracking-wider';
+                document.getElementById('cards-6k').classList.remove('hidden');
+                document.getElementById('cards-15k').classList.remove('hidden');
                 document.querySelectorAll('.col-6k').forEach(el => el.classList.remove('hidden'));
                 document.querySelectorAll('.col-15k').forEach(el => el.classList.remove('hidden'));
-                table.classList.add('table-condensed');
             }
         }
 
@@ -320,7 +314,7 @@
             });
             btn.innerHTML = isHidden 
                 ? '<i class="fa-solid fa-chevron-up"></i> ย่อรายละเอียด' 
-                : '<i class="fa-solid fa-chevron-down"></i> ดูรายละเอียดความคุ้มครองเชิงลึกเพิ่มเติม (IPD หมวด 2-19)';
+                : '<i class="fa-solid fa-chevron-down"></i> แสดงรายละเอียดครบทั้ง 19 หมวดเพิ่มเติม';
         }
     </script>
 </body>
